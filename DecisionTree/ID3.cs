@@ -14,27 +14,46 @@ namespace DecisionTree
 
         public ID3Node Train(string arffFilePath)
         {
-            // Load the examples
-            Instances examples = new weka.core.Instances(new java.io.FileReader(arffFilePath));
-            this.TargetAttributeIndex = examples.numAttributes() - 1;
+            // Load the examples into S
+            Instances S = new weka.core.Instances(new java.io.FileReader(arffFilePath));
+            this.TargetAttributeIndex = S.numAttributes() - 1;
 
             // Store the attribute indexes in a list. They will get removed as we split on attributes.
             List<int> attributeIndexes = new List<int>();
-            for (int i=0; i< examples.numAttributes() - 1; i++)
+            for (int i = 0; i < S.numAttributes() - 1; i++)
             {
                 attributeIndexes.Add(i);
             }
 
             ID3Node root = new ID3Node();
 
-            this.TrainRecursive(root, examples, this.TargetAttributeIndex, attributeIndexes);
+            this.TrainRecursive(root, S, this.TargetAttributeIndex, attributeIndexes);
 
             return root;
         }
 
-        public void TrainRecursive(ID3Node root, Instances examples, int targetAttribute, List<int> attributeIndexes)
+        public void TrainRecursive(ID3Node root, Instances S, int targetAttributeIndex, List<int> attributeIndexes)
         {
-            double gain = this.CalculateGain(examples, 3, this.TargetAttributeIndex);
+            if (S.numInstances() == 0)
+            {
+                return;
+            }
+
+            // Check the target attribute value of every example in S
+            double targetValue = S.instance(0).value(targetAttributeIndex);
+            bool targetValuesAreAllEqual = true;
+            for (int i=1; i < S.numInstances(); i++)
+            {
+                if (targetValue != S.instance(i).value(targetAttributeIndex))
+                {
+                    targetValuesAreAllEqual = false;
+                    break;
+                }
+            }
+
+
+
+            double gain = this.CalculateGain(S, 3, this.TargetAttributeIndex);
 
         }
 
