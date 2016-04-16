@@ -10,7 +10,7 @@ namespace DecisionTree
 {
     public class ID3
     {
-        private int ClassAttributeIndex;
+        private int TargetAttributeIndex;
 
         public ID3Node root;
 
@@ -19,9 +19,9 @@ namespace DecisionTree
             this.root = new ID3Node();
 
             Instances examples = new weka.core.Instances(new java.io.FileReader(arffFilePath));
-            this.ClassAttributeIndex = examples.numAttributes() - 1;
+            this.TargetAttributeIndex = examples.numAttributes() - 1;
 
-            double entropy = this.CalculateEntropy(examples, 273);
+            double entropy = this.CalculateEntropy(examples, this.TargetAttributeIndex);
         }
 
         public void TrainRecursive(Instances examples, int targetAttribute, List<int> attributes)
@@ -29,29 +29,35 @@ namespace DecisionTree
 
         }
 
-        private double CalculateEntropy(Instances examples, int attributeIndex)
+        private double CalculateEntropy(Instances examples, int targetAttributeIndex)
         {
-            // Number of discrete values that this attribute can have
-            int numValues = examples.attribute(attributeIndex).numValues();
-            int numExamples = examples.numInstances();
-            int[] proportions = new int[numValues];
+            // Number of discrete values that the target attribute can have
+            int numTargetValues = examples.attribute(targetAttributeIndex).numValues();
 
-            // Iterate through the examples to count the proportion of examples belonging to each attribute value
+            int numExamples = examples.numInstances();
+            
+            // For each possible discrete value that the target attribute can have, count how many times it is present in the examples
+            // For boolean target attributes it is just true/false
+            int[] targetValueCounts = new int[numTargetValues];
+
+            // Iterate through the examples to count the proportion of examples for each value of the target attribute
             for (int i = 0; i < numExamples; i++)
             {
-                int? value = Double.IsNaN(examples.instance(i).value(attributeIndex)) ? null : (int?)(examples.instance(i).value(attributeIndex));
-
-                if (value != null)
+                if (Double.IsNaN(examples.instance(i).value(targetAttributeIndex)))
                 {
-                    proportions[(int)value]++;
+                    // This shouldn't happen (?)
+                    throw new Exception("Value at targetAttributeIndex is NaN");
                 }
+
+                int value = (int)examples.instance(i).value(targetAttributeIndex);
+                targetValueCounts[value]++;
             }
 
             double entropy = 0;
 
-            for (int i = 0; i < numValues; i++)
+            for (int i = 0; i < numTargetValues; i++)
             {
-                double proportion = proportions[i] / (double)numExamples;
+                double proportion = targetValueCounts[i] / (double)numExamples;
 
                 if (proportion != 0) // Skip 0 to avoid log(0)
                 {
