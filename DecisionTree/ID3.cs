@@ -12,30 +12,39 @@ namespace DecisionTree
     {
         private int TargetAttributeIndex;
 
-        public ID3Node root;
-
-        public void Train(string arffFilePath)
+        public ID3Node Train(string arffFilePath)
         {
-            this.root = new ID3Node();
-
+            // Load the examples
             Instances examples = new weka.core.Instances(new java.io.FileReader(arffFilePath));
             this.TargetAttributeIndex = examples.numAttributes() - 1;
 
-            double gain = this.CalculateGain(examples, 3, this.TargetAttributeIndex);
+            // Store the attribute indexes in a list. They will get removed as we split on attributes.
+            List<int> attributeIndexes = new List<int>();
+            for (int i=0; i< examples.numAttributes() - 1; i++)
+            {
+                attributeIndexes.Add(i);
+            }
+
+            ID3Node root = new ID3Node();
+
+            this.TrainRecursive(root, examples, this.TargetAttributeIndex, attributeIndexes);
+
+            return root;
         }
 
-        public void TrainRecursive(Instances examples, int targetAttribute, List<int> attributes)
+        public void TrainRecursive(ID3Node root, Instances examples, int targetAttribute, List<int> attributeIndexes)
         {
+            double gain = this.CalculateGain(examples, 3, this.TargetAttributeIndex);
 
         }
 
         private double CalculateGain(Instances S, int attributeIndex, int targetAttributeIndex)
         {
             // This will store Sv (per Mitchell Eq. 3.4) for each v in Values(A)
-            Dictionary<int, Instances> SvList = new Dictionary<int,Instances>();
+            Dictionary<int, Instances> SvList = new Dictionary<int, Instances>();
 
             // Initialize SvList
-            for (int i=0; i< S.attribute(attributeIndex).numValues(); i++)
+            for (int i = 0; i < S.attribute(attributeIndex).numValues(); i++)
             {
                 SvList.Add(i, new Instances(S, 0, 0));
             }
@@ -105,7 +114,7 @@ namespace DecisionTree
                     entropy += (-1 * proportion * Math.Log(proportion, 2));
                 }
             }
-            
+
             return entropy;
         }
     }
