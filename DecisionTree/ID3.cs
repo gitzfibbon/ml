@@ -39,19 +39,57 @@ namespace DecisionTree
                 return;
             }
 
-            // Check the target attribute value of every example in S
-            double targetValue = S.instance(0).value(targetAttributeIndex);
-            bool targetValuesAreAllEqual = true;
-            for (int i=1; i < S.numInstances(); i++)
+            // For each possible discrete value that the target attribute can have, count how many times it is present in the examples
+            int[] targetValueCounts = new int[S.attribute(targetAttributeIndex).numValues()];
+
+            // Check the most common target attribute value of every example in S
+            // Also keep track of whether all values are the same
+            int countOfS = S.numInstances();
+            int firstTargetValue = (int)S.instance(0).value(targetAttributeIndex);
+            bool allTargetValuesAreEqual = true;
+            for (int i = 0; i < countOfS; i++)
             {
-                if (targetValue != S.instance(i).value(targetAttributeIndex))
+                if (Double.IsNaN(S.instance(i).value(targetAttributeIndex)))
                 {
-                    targetValuesAreAllEqual = false;
-                    break;
+                    // This shouldn't happen (?)
+                    throw new Exception(String.Format("Value at targetAttributeIndex {0} is NaN", targetAttributeIndex));
+                }
+
+                int value = (int)S.instance(i).value(targetAttributeIndex);
+                targetValueCounts[value]++;
+
+                if (firstTargetValue != value)
+                {
+                    allTargetValuesAreEqual = false;
                 }
             }
 
+            // Check if all target values are the same in which case we make this a leaf node
+            if (allTargetValuesAreEqual == true)
+            {
+                root.IsLeaf = true;
+                root.AttributeValue = firstTargetValue;
+                return;
+            }
 
+            // Check if the attribute list is empty and return most common target value if so
+            if (attributeIndexes.Count == 0)
+            {
+                // Find the most common target attribute value
+                int mostCommonTargetValueIndex = 0;
+                for (int i=1; i < targetValueCounts.Count(); i++)
+                {
+                    if (targetValueCounts[i] > targetValueCounts[mostCommonTargetValueIndex])
+                    {
+                        mostCommonTargetValueIndex = i;
+                    }
+                }
+
+                // Now set the node to this target value and return
+                root.IsLeaf = true;
+                root.AttributeValue = mostCommonTargetValueIndex;
+                return;
+            }
 
             double gain = this.CalculateGain(S, 3, this.TargetAttributeIndex);
 
