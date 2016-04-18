@@ -11,6 +11,10 @@ namespace DecisionTree
 {
     public class ID3
     {
+        public static int PositiveTargetValue = 0;
+        public static int NegativeTargetValue = 1;
+
+
         //private int TargetAttributeIndex;
         private ID3Node RootNode;
 
