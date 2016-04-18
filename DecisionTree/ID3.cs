@@ -230,6 +230,12 @@ namespace DecisionTree
             List<int> newAttributeIndexes = new List<int>(attributeIndexes);
             newAttributeIndexes.RemoveAt(maxGainAttributeIndex);
 
+            // Check if we should keep splitting
+            if (ChiSquare.ChiSquaredTest(0.05, S, maxGainAttribute, targetAttributeIndex) == false)
+            {
+                root.IsLeaf = true;
+                root.AttributeValue = mostCommonTargetValueIndex;
+            }
 
             Dictionary<int, Instances> examplesVi = new Dictionary<int, Instances>();
             // Initialize the examplesVi dictionary

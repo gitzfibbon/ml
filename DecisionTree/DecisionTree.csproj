@@ -141,6 +141,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChiSquare.cs" />
+    <Compile Include="ChiSquareUtils.cs" />
     <Compile Include="ID3Node.cs" />
     <Compile Include="ID3.cs" />
     <Compile Include="IkvmExample.cs" />

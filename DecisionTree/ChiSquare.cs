@@ -10,32 +10,47 @@ namespace DecisionTree
 {
     public class ChiSquare
     {
-        //private static double ApproximateChiSquared(double p, double n, double pi, double ni)
+        /// <summary>
+        /// Return true if within the confidence interval
+        /// </summary>
+        public static bool ChiSquaredTest(double confidenceInterval, Instances S, int attributeIndex, int targetAttributeIndex)
+        {
+            int df = S.attribute(attributeIndex).numValues() - 1;
+            double chiSquaredStatistic = ChiSquare.ApproximateChiSquared(S, attributeIndex, targetAttributeIndex);
+            double pValue = ChiSquareUtils.pochisq(chiSquaredStatistic, df);
+
+            return true;
+        }
+
         private static double ApproximateChiSquared(Instances S, int attributeIndex, int targetAttributeIndex)
         {
-            Dictionary<int, Instances> examplesList = new Dictionary<int, Instances>();
+            // In the int array, element 1 is Positive and element 2 is Negative
+            int indexOfPositive = 0;
+            int indexOfNegative = 1;
+            Dictionary<int, int[]> examplesList = new Dictionary<int, int[]>();
             for (int i = 0; i < S.attribute(attributeIndex).numValues(); i++)
             {
-                examplesList.Add(i, new Instances(S, 0,0));
+                examplesList.Add(i, new int[2]);
             }
 
             // Partition each example into a bucket based on its attribute value
             // Also, get a count of positive and negative target values
             double p = 0;
             double n = 0;
-            for (int i = 0; i < S.numInstances(); i++ )
+            for (int i = 0; i < S.numInstances(); i++)
             {
                 int value = (int)S.instance(i).value(attributeIndex);
-                examplesList[value].add(S.instance(i));
-
                 int targetValue = (int)S.instance(i).value(targetAttributeIndex);
+
                 if (targetValue == ID3.PositiveTargetValue)
                 {
                     p++;
+                    examplesList[value][indexOfPositive]++;
                 }
                 else if (targetValue == ID3.NegativeTargetValue)
                 {
                     n++;
+                    examplesList[value][indexOfNegative]++;
                 }
                 else
                 {
@@ -44,14 +59,19 @@ namespace DecisionTree
             }
 
             // Go through each partition to sum up the Chi-Squared statistic
-            for (int i=0; i < S.attribute(attributeIndex).numValues(); i++)
+            double chiSquaredStatistic = 0;
+            for (int i = 0; i < S.attribute(attributeIndex).numValues(); i++)
             {
+                double pi = examplesList[i][indexOfPositive];
+                double ni = examplesList[i][indexOfNegative];
+
                 double expectedPi = ChiSquare.ExpectedPi(p, n, pi, ni);
                 double expectedNi = ChiSquare.ExpectedNi(p, n, pi, ni);
 
+                chiSquaredStatistic += (Math.Pow(pi - expectedPi, 2) / expectedPi) + (Math.Pow(ni - expectedNi, 2) / expectedNi);
             }
 
-
+            return chiSquaredStatistic;
         }
 
         private static double ExpectedPi(double p, double n, double pi, double ni)

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Math;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,27 +20,27 @@ namespace DecisionTree
             Updated for rounding errors based on remark in
             ACM TOMS June 1985, page 185
         */
-        public static double pochisq(double x, int df) {
+        public static double pochisq(double chiSquareValue, int df) {
             double a, s;
             double e, c, z;
  
-            if (x <= 0.0 || df < 1) {
+            if (chiSquareValue <= 0.0 || df < 1) {
                 return 1.0;
             }
-            a = 0.5 * x;
+            a = 0.5 * chiSquareValue;
             bool even = (df & 1) == 0;
             double y = 0;
             if (df > 1) {
                 y = ex(-a);
             }
-            s = (even ? y : (2.0 * poz(-Math.Sqrt(x))));
+            s = (even ? y : (2.0 * poz(-Math.Sqrt(chiSquareValue))));
             if (df > 2) {
-                x = 0.5 * (df - 1.0);
+                chiSquareValue = 0.5 * (df - 1.0);
                 z = (even ? 1.0 : 0.5);
                 if (a > MAX_X) {
                     e = (even ? 0.0 : LOG_SQRT_PI);
                     c = Math.Log(a);
-                    while (z <= x) {
+                    while (z <= chiSquareValue) {
                         e = Math.Log(z) + e;
                         s += ex(c * z - a - e);
                         z += 1.0;
@@ -50,7 +49,7 @@ namespace DecisionTree
                 } else {
                     e = (even ? 1.0 : (I_SQRT_PI / Math.Sqrt(a)));
                     c = 0.0;
-                    while (z <= x) {
+                    while (z <= chiSquareValue) {
                         e = e * (a / z);
                         c = c + e;
                         z += 1.0;
