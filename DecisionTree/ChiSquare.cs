@@ -20,7 +20,9 @@ namespace DecisionTree
             int df = S.attribute(attributeIndex).numValues() - 1;
             double chiSquaredStatistic = ChiSquare.ApproximateChiSquared(S, attributeIndex, targetAttributeIndex);
             double pValue = ChiSquareUtils.pochisq(chiSquaredStatistic, df);
-
+            
+            Log.LogStats("ChiSquared pValue is {0} and threshold is {1}", pValue, threshold);
+            
             bool result = (pValue <= threshold);
             return result;
         }
@@ -40,20 +42,30 @@ namespace DecisionTree
             // Also, get a count of positive and negative target values
             double p = 0;
             double n = 0;
+            int droppedExamples = 0;
             for (int i = 0; i < S.numInstances(); i++)
             {
-                int value = (int)S.instance(i).value(attributeIndex);
+                double value = S.instance(i).value(attributeIndex);
+
+                if (Double.IsNaN(value))
+                {
+                    // Drop missing/unknown values but keep track of how many are dropped
+                    droppedExamples++;
+                    Log.LogVerbose("IsNaN encountered calculating chi-squared stat for attribute {0}", attributeIndex);
+                    continue;
+                }
+
                 int targetValue = (int)S.instance(i).value(targetAttributeIndex);
 
                 if (targetValue == ID3.PositiveTargetValue)
                 {
                     p++;
-                    examplesList[value][indexOfPositive]++;
+                    examplesList[(int)value][indexOfPositive]++;
                 }
                 else if (targetValue == ID3.NegativeTargetValue)
                 {
                     n++;
-                    examplesList[value][indexOfNegative]++;
+                    examplesList[(int)value][indexOfNegative]++;
                 }
                 else
                 {

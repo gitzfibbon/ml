@@ -9,17 +9,20 @@ class MainClass
         Log.InfoOn = true;
         Log.NodeOn = false;
         Log.StatsOn = true;
+        //Log.VerboseOn = true;
 
-        Small();
- 
+        //Tennis();
+        //Small();
+        Full();
+
         //IkvmExample.classifyTest();
     }
 
     private static void Full()
     {
         ID3 id3 = new ID3();
-        ID3Node root = id3.Train(@"C:\coding\ml\test\testingD.arff");
-        id3.Test(@"C:\coding\ml\test\training_subsetD.arff", root);
+        ID3Node root = id3.Train(@"C:\coding\ml\test\training_subsetD.arff");
+        id3.Test(@"C:\coding\ml\test\testingD.arff", root);
     }
 
     private static void Small()

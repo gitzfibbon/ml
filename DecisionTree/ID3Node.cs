@@ -18,6 +18,8 @@ namespace DecisionTree
         // If this is a leaf, set this to the predicted value (an index into the possible values of the target attribute)
         public int AttributeValue = -1;
 
+        public double Weight = 0;
+
         // Each child node is indexed by its attribute value which is an index/int
         public List<ID3Node> ChildNodes = new List<ID3Node>();
 

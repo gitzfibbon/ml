@@ -116,8 +116,24 @@ namespace DecisionTree
             }
 
             // Else, figure out which path to take
-            int attributeValue = (int)example.value(node.SplitAttributeIndex);
-            ID3Node nextNode = node.ChildNodes[attributeValue];
+            double attributeValue = example.value(node.SplitAttributeIndex);
+
+            if (Double.IsNaN(attributeValue))
+            {
+                // TODO: use fractional test based on weights
+                int highestWeightedAttribute = 0;
+                for (int i = 0; i < node.ChildNodes.Count(); i++)
+                {
+                    if (node.ChildNodes[i].Weight > node.ChildNodes[highestWeightedAttribute].Weight)
+                    {
+                        highestWeightedAttribute = i;
+                    }
+                }
+
+                attributeValue = highestWeightedAttribute;
+            }
+
+            ID3Node nextNode = node.ChildNodes[(int)attributeValue];
 
             return this.Predict(nextNode, example);
         }
@@ -149,8 +165,6 @@ namespace DecisionTree
 
         public void TrainRecursive(ID3Node root, Instances S, int targetAttributeIndex, List<int> attributeIndexes)
         {
-            Log.LogInfo("At node with split {0}, value {1}, leaf {2}", root.SplitAttributeIndex, root.AttributeValue, root.IsLeaf);
-
             if (S.numInstances() == 0)
             {
                 return;
@@ -172,7 +186,7 @@ namespace DecisionTree
             {
                 if (Double.IsNaN(S.instance(i).value(targetAttributeIndex)))
                 {
-                    // This shouldn't happen (?)
+                    // For target values, this shouldn't happen
                     throw new Exception(String.Format("Value at targetAttributeIndex {0} is NaN", targetAttributeIndex));
                 }
 
@@ -190,6 +204,7 @@ namespace DecisionTree
             {
                 root.IsLeaf = true;
                 root.AttributeValue = firstTargetValue;
+                Log.LogInfo("All Targets Equal. Node with split {0}, value {1}, leaf {2}, weight {3}", root.SplitAttributeIndex, root.AttributeValue, root.IsLeaf, root.Weight);
                 return;
             }
 
@@ -209,6 +224,7 @@ namespace DecisionTree
                 // Now set the node to this target value and return
                 root.IsLeaf = true;
                 root.AttributeValue = mostCommonTargetValueIndex;
+                Log.LogInfo("Attribute List Empty. Node with split {0}, value {1}, leaf {2}, weight {3}", root.SplitAttributeIndex, root.AttributeValue, root.IsLeaf, root.Weight);
                 return;
             }
 
@@ -228,17 +244,20 @@ namespace DecisionTree
 
             // Now we know which attribute to split on
             int maxGainAttribute = attributeIndexes[maxGainAttributeIndex];
-            root.SplitAttributeIndex = maxGainAttribute;
-            List<int> newAttributeIndexes = new List<int>(attributeIndexes);
-            newAttributeIndexes.RemoveAt(maxGainAttributeIndex);
+            Log.LogGain("MaxGain is {0} from Attribute {1}", maxGain, maxGainAttributeIndex);
 
             // Check if we should keep splitting
             if (ChiSquare.ChiSquaredTest(0.95, S, maxGainAttribute, targetAttributeIndex) == false)
             {
                 root.IsLeaf = true;
                 root.AttributeValue = mostCommonTargetValueIndex;
+                Log.LogInfo("ChiSquared stop split. Node with split {0}, value {1}, leaf {2}, weight {3}", root.SplitAttributeIndex, root.AttributeValue, root.IsLeaf, root.Weight);
                 return;
             }
+
+            root.SplitAttributeIndex = maxGainAttribute;
+            List<int> newAttributeIndexes = new List<int>(attributeIndexes);
+            newAttributeIndexes.RemoveAt(maxGainAttributeIndex);
 
             Dictionary<int, Instances> examplesVi = new Dictionary<int, Instances>();
             // Initialize the examplesVi dictionary
@@ -253,15 +272,15 @@ namespace DecisionTree
                 if (Double.IsNaN(S.instance(i).value(maxGainAttribute)))
                 {
                     // TODO: This will happen. How to handle it?
+                    Log.LogVerbose("IsNaN encountered for instance {0} of maxGainAttribute {1}", i, maxGainAttribute);
                     continue;
-                    //throw new Exception(String.Format("Value at targetAttributeIndex {0} is NaN", targetAttributeIndex));
-
                 }
 
                 int value = (int)S.instance(i).value(maxGainAttribute);
                 examplesVi[value].add(S.instance(i));
             }
 
+            // Split
             for (int i = 0; i < S.attribute(maxGainAttribute).numValues(); i++)
             {
                 ID3Node newChild = new ID3Node();
@@ -270,13 +289,17 @@ namespace DecisionTree
                 if (examplesVi[i].numInstances() == 0)
                 {
                     newChild.IsLeaf = true;
-                    newChild.SplitAttributeIndex = i;
                     newChild.AttributeValue = mostCommonTargetValueIndex;
+                    Log.LogInfo("No instances to split on. Node with split {0}, value {1}, leaf {2}, weight {3}", root.SplitAttributeIndex, root.AttributeValue, root.IsLeaf, root.Weight);
+                    return;
                 }
                 else
                 {
+                    Log.LogInfo("Splitting. Node with split {0}, value {1}, leaf {2}, weight {3}", root.SplitAttributeIndex, root.AttributeValue, root.IsLeaf, root.Weight);
+
                     newChild.IsLeaf = false;
                     newChild.SplitAttributeIndex = i;
+                    newChild.Weight = examplesVi[i].numInstances() / S.attribute(maxGainAttribute).numValues();
                     this.TrainRecursive(newChild, examplesVi[i], targetAttributeIndex, newAttributeIndexes);
                 }
 
@@ -297,11 +320,14 @@ namespace DecisionTree
 
             // Iterate through each possible value of the attribute we're examining and populate SvList
             int countOfS = S.numInstances();
+            int droppedExamples = 0;
             for (int i = 0; i < countOfS; i++)
             {
                 if (Double.IsNaN(S.instance(i).value(attributeIndex)))
                 {
-                    // TODO: Need to decide on how to handle this
+                    // For unknown/missing values we drop them and count how many so we can update calculations later
+                    droppedExamples++;
+                    Log.LogVerbose("IsNaN encountered calculating gain for attribute {0}", attributeIndex);
                     continue;
                 }
 
@@ -316,7 +342,7 @@ namespace DecisionTree
                 double countOfSv = SvList[i].numInstances();
                 double entropyOfSv = this.CalculateEntropy(SvList[i], targetAttributeIndex);
 
-                expectedEntropy += (countOfSv / countOfS) * entropyOfSv;
+                expectedEntropy += (countOfSv / (countOfS - droppedExamples)) * entropyOfSv;
             }
 
             // Now we have all the info we need to calculate gain for this attribute

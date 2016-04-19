@@ -12,6 +12,7 @@ namespace DecisionTree
         public static bool InfoOn = false;
         public static bool NodeOn = false;
         public static bool StatsOn = false;
+        public static bool VerboseOn = false;
 
         public static void LogGain(string msg, params object[] args)
         {
@@ -45,6 +46,15 @@ namespace DecisionTree
                 Console.WriteLine(String.Format(msg, args));
             }
         }
+
+        public static void LogVerbose(string msg, params object[] args)
+        {
+            if (VerboseOn)
+            {
+                Console.WriteLine(String.Format(msg, args));
+            }
+        }
+
 
     }
 }
