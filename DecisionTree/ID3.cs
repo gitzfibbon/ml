@@ -153,7 +153,7 @@ namespace DecisionTree
 
             this.RootNode = new ID3Node();
 
-            this.TrainRecursive(this.RootNode, S, targetAttributeIndex, attributeIndexes);
+            this.TrainRecursive(this.RootNode, S, targetAttributeIndex, attributeIndexes, confidenceLevel);
 
             if (Log.NodeOn == true)
             {
@@ -163,7 +163,7 @@ namespace DecisionTree
             return this.RootNode;
         }
 
-        public void TrainRecursive(ID3Node root, Instances S, int targetAttributeIndex, List<int> attributeIndexes)
+        public void TrainRecursive(ID3Node root, Instances S, int targetAttributeIndex, List<int> attributeIndexes, double confidenceLevel)
         {
             if (S.numInstances() == 0)
             {
@@ -300,7 +300,7 @@ namespace DecisionTree
                     newChild.IsLeaf = false;
                     newChild.SplitAttributeIndex = i;
                     newChild.Weight = examplesVi[i].numInstances() / S.attribute(maxGainAttribute).numValues();
-                    this.TrainRecursive(newChild, examplesVi[i], targetAttributeIndex, newAttributeIndexes);
+                    this.TrainRecursive(newChild, examplesVi[i], targetAttributeIndex, newAttributeIndexes, confidenceLevel);
                 }
 
             }
