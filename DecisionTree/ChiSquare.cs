@@ -15,11 +15,14 @@ namespace DecisionTree
         /// </summary>
         public static bool ChiSquaredTest(double confidenceInterval, Instances S, int attributeIndex, int targetAttributeIndex)
         {
+            double threshold = 1 - confidenceInterval;
+
             int df = S.attribute(attributeIndex).numValues() - 1;
             double chiSquaredStatistic = ChiSquare.ApproximateChiSquared(S, attributeIndex, targetAttributeIndex);
             double pValue = ChiSquareUtils.pochisq(chiSquaredStatistic, df);
 
-            return true;
+            bool result = (pValue <= threshold);
+            return result;
         }
 
         private static double ApproximateChiSquared(Instances S, int attributeIndex, int targetAttributeIndex)

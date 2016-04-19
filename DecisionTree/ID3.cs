@@ -88,22 +88,22 @@ namespace DecisionTree
                 }
             }
 
-            Console.WriteLine("truePositive: {0}", truePositive);
-            Console.WriteLine("falseNegative: {0}", falseNegative);
-            Console.WriteLine("falsePositive: {0}", falsePositive);
-            Console.WriteLine("trueNegative: {0}", trueNegative);
-            Console.WriteLine("actualPositive: {0}", actualPositive);
-            Console.WriteLine("actualNegative: {0}", actualNegative);
-            Console.WriteLine("predictedPositive: {0}", predictedPositive);
-            Console.WriteLine("predictedNegative: {0}", predictedNegative);
+            //Log.LogStats("truePositive: {0}", truePositive);
+            //Log.LogStats("falseNegative: {0}", falseNegative);
+            //Log.LogStats("falsePositive: {0}", falsePositive);
+            //Log.LogStats(("trueNegative: {0}", trueNegative);
+            //Log.LogStats("actualPositive: {0}", actualPositive);
+            //Log.LogStats("actualNegative: {0}", actualNegative);
+            //Log.LogStats("predictedPositive: {0}", predictedPositive);
+            //Log.LogStats("predictedNegative: {0}", predictedNegative);
 
             double precision = truePositive / (double)(truePositive + falsePositive);
             double recall = truePositive / (double)(truePositive + falseNegative);
             double accuracy = (truePositive + trueNegative) / (double)(S.numInstances());
 
-            Console.WriteLine("precision: {0}", precision);
-            Console.WriteLine("recall: {0}", recall);
-            Console.WriteLine("accuracy: {0}", accuracy);
+            Log.LogStats("precision: {0}", precision);
+            Log.LogStats("recall: {0}", recall);
+            Log.LogStats("accuracy: {0}", accuracy);
 
         }
 
@@ -122,7 +122,7 @@ namespace DecisionTree
             return this.Predict(nextNode, example);
         }
 
-        public ID3Node Train(string arffFilePath, bool printTree = false)
+        public ID3Node Train(string arffFilePath)
         {
             // Load the examples into S
             Instances S = new weka.core.Instances(new java.io.FileReader(arffFilePath));
@@ -139,7 +139,7 @@ namespace DecisionTree
 
             this.TrainRecursive(this.RootNode, S, targetAttributeIndex, attributeIndexes);
 
-            if (printTree == true)
+            if (Log.NodeOn == true)
             {
                 ID3Node.BFS(this.RootNode, S);
             }
@@ -149,6 +149,8 @@ namespace DecisionTree
 
         public void TrainRecursive(ID3Node root, Instances S, int targetAttributeIndex, List<int> attributeIndexes)
         {
+            Log.LogInfo("At node with split {0}, value {1}, leaf {2}", root.SplitAttributeIndex, root.AttributeValue, root.IsLeaf);
+
             if (S.numInstances() == 0)
             {
                 return;
@@ -231,10 +233,11 @@ namespace DecisionTree
             newAttributeIndexes.RemoveAt(maxGainAttributeIndex);
 
             // Check if we should keep splitting
-            if (ChiSquare.ChiSquaredTest(0.05, S, maxGainAttribute, targetAttributeIndex) == false)
+            if (ChiSquare.ChiSquaredTest(0.95, S, maxGainAttribute, targetAttributeIndex) == false)
             {
                 root.IsLeaf = true;
                 root.AttributeValue = mostCommonTargetValueIndex;
+                return;
             }
 
             Dictionary<int, Instances> examplesVi = new Dictionary<int, Instances>();
