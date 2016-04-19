@@ -88,14 +88,14 @@ namespace DecisionTree
                 }
             }
 
-            //Log.LogStats("truePositive: {0}", truePositive);
-            //Log.LogStats("falseNegative: {0}", falseNegative);
-            //Log.LogStats("falsePositive: {0}", falsePositive);
-            //Log.LogStats(("trueNegative: {0}", trueNegative);
-            //Log.LogStats("actualPositive: {0}", actualPositive);
-            //Log.LogStats("actualNegative: {0}", actualNegative);
-            //Log.LogStats("predictedPositive: {0}", predictedPositive);
-            //Log.LogStats("predictedNegative: {0}", predictedNegative);
+            Log.LogStats("truePositive: {0}", truePositive);
+            Log.LogStats("falseNegative: {0}", falseNegative);
+            Log.LogStats("falsePositive: {0}", falsePositive);
+            Log.LogStats("trueNegative: {0}", trueNegative);
+            Log.LogStats("actualPositive: {0}", actualPositive);
+            Log.LogStats("actualNegative: {0}", actualNegative);
+            Log.LogStats("predictedPositive: {0}", predictedPositive);
+            Log.LogStats("predictedNegative: {0}", predictedNegative);
 
             double precision = truePositive / (double)(truePositive + falsePositive);
             double recall = truePositive / (double)(truePositive + falseNegative);
@@ -138,7 +138,7 @@ namespace DecisionTree
             return this.Predict(nextNode, example);
         }
 
-        public ID3Node Train(string arffFilePath)
+        public ID3Node Train(string arffFilePath, double confidenceLevel)
         {
             // Load the examples into S
             Instances S = new weka.core.Instances(new java.io.FileReader(arffFilePath));
@@ -247,7 +247,7 @@ namespace DecisionTree
             Log.LogGain("MaxGain is {0} from Attribute {1}", maxGain, maxGainAttributeIndex);
 
             // Check if we should keep splitting
-            if (ChiSquare.ChiSquaredTest(0.95, S, maxGainAttribute, targetAttributeIndex) == false)
+            if (ChiSquare.ChiSquaredTest(confidenceLevel, S, maxGainAttribute, targetAttributeIndex) == false)
             {
                 root.IsLeaf = true;
                 root.AttributeValue = mostCommonTargetValueIndex;
