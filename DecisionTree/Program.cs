@@ -11,11 +11,22 @@ class MainClass
         Log.StatsOn = true;
         //Log.VerboseOn = true;
 
-        //Tennis(0.9);
-        //Small(0.9);
-        Full(0.99);
+        double confidenceLevel = 0.95;
+        string trainingSetPath = @"C:\coding\ml\test\training_subsetD.arff";
+        string testingSetPath = @"C:\coding\ml\test\testingD.arff";
 
-        //IkvmExample.classifyTest();
+        if (args.Length >= 3)
+        {
+            confidenceLevel = Convert.ToDouble(args[0]);
+            trainingSetPath = args[1];
+            testingSetPath = args[2];
+        }
+
+        ID3 id3 = new ID3();
+        ID3Node root = id3.Train(trainingSetPath, confidenceLevel);
+        id3.Test(testingSetPath, root);
+
+        //Tennis(0.9);
     }
 
     private static void Full(double confidenceLevel)
@@ -23,14 +34,6 @@ class MainClass
         ID3 id3 = new ID3();
         ID3Node root = id3.Train(@"C:\coding\ml\test\training_subsetD.arff", confidenceLevel);
         id3.Test(@"C:\coding\ml\test\testingD.arff", root);
-    }
-
-    private static void Small(double confidenceLevel)
-    {
-        ID3 id3 = new ID3();
-        ID3Node root = id3.Train(@"C:\coding\ml\test\devD.arff", confidenceLevel);
-        id3.Test(@"C:\coding\ml\test\devD.arff", root);
-
     }
 
     private static void Tennis(double confidenceLevel)

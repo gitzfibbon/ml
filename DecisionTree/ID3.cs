@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -229,24 +230,67 @@ namespace DecisionTree
             }
 
             // Figure out which attribute will give us the most gain
-            int maxGainAttributeIndex = 0;
-            double maxGain = 0;
+            //int maxGainAttributeIndex = 0;
+            //double maxGain = 0;
+            double gainSum = 0;
+            SortedDictionary<double, int> gainListOrdered = new SortedDictionary<double, int>();
             for (int i = 0; i < attributeIndexes.Count(); i++)
             {
                 double gain = this.CalculateGain(S, i, targetAttributeIndex);
 
-                if (gain > maxGain)
+                //if (gain > maxGain)
+                //{
+                //    maxGainAttributeIndex = i;
+                //    maxGain = gain;
+                //}
+
+                if (!Double.IsNaN(gain))
                 {
-                    maxGainAttributeIndex = i;
-                    maxGain = gain;
+                    gainSum += gain;
+                    gainListOrdered.Add(gain, i);
                 }
+            }
+
+            //int maxGainAttributeIndex = gainListOrdered.ElementAt(gainListOrdered.Count -1).Value;;
+            double maxGain = gainListOrdered.ElementAt(gainListOrdered.Count - 1).Key;
+            double averageGain = gainSum / attributeIndexes.Count();
+
+            // Use gain ratio on top 10% from the gainListOrdered and calculate maxGainRatio
+            double maxGainRatio = 0;
+            int top10Percent = (int)Math.Ceiling(0.1 * attributeIndexes.Count());
+            for (int i = 0; i < top10Percent; i++)
+            {
+                int index = gainListOrdered.ElementAt(gainListOrdered.Count() - 1 - i).Value;
+                double gainRatio = this.CalculateGainRatio(S, index, targetAttributeIndex);
+
+                if (gainRatio > maxGainRatio)
+                {
+                    maxGainRatio = gainRatio;
+                }
+            }
+
+            int maxGainAttributeIndex = gainListOrdered.ElementAt(gainListOrdered.Count - 1).Value; ;
+
+            // If there was no max gain
+            if (Double.IsNaN(maxGain))
+            {
+                root.IsLeaf = true;
+                root.AttributeValue = mostCommonTargetValueIndex;
+                Log.LogInfo("No Max Gain (NaN). Node with split {0}, value {1}, leaf {2}, weight {3}", root.SplitAttributeIndex, root.AttributeValue, root.IsLeaf, root.Weight);
+                return;
             }
 
             // Now we know which attribute to split on
             int maxGainAttribute = attributeIndexes[maxGainAttributeIndex];
-            Log.LogGain("MaxGain is {0} from Attribute {1}", maxGain, maxGainAttributeIndex);
+            Log.LogGain("MaxGain is {0} from Attribute {1}. Avg Gain is {2}.", maxGain, maxGainAttribute, averageGain);
 
-            // Check if we should keep splitting
+            int maxGainRatioAttribute = gainListOrdered[maxGainRatio];
+            Log.LogGain("MaxGainRatio is {0} from Attribute {1}. Avg Gain is {2}.", maxGainRatio, maxGainRatioAttribute, averageGain);
+
+            // TEMP: For now just overwrite maxGainAttribute
+            maxGainAttribute = maxGainRatioAttribute;
+
+            // Check if we should stop splitting
             if (ChiSquare.ChiSquaredTest(confidenceLevel, S, maxGainAttribute, targetAttributeIndex) == false)
             {
                 root.IsLeaf = true;
@@ -260,6 +304,7 @@ namespace DecisionTree
             newAttributeIndexes.RemoveAt(maxGainAttributeIndex);
 
             Dictionary<int, Instances> examplesVi = new Dictionary<int, Instances>();
+            int totalExamplesVi = 0;
             // Initialize the examplesVi dictionary
             for (int i = 0; i < S.attribute(maxGainAttribute).numValues(); i++)
             {
@@ -278,6 +323,7 @@ namespace DecisionTree
 
                 int value = (int)S.instance(i).value(maxGainAttribute);
                 examplesVi[value].add(S.instance(i));
+                totalExamplesVi++;
             }
 
             // Split
@@ -291,7 +337,6 @@ namespace DecisionTree
                     newChild.IsLeaf = true;
                     newChild.AttributeValue = mostCommonTargetValueIndex;
                     Log.LogInfo("No instances to split on. Node with split {0}, value {1}, leaf {2}, weight {3}", root.SplitAttributeIndex, root.AttributeValue, root.IsLeaf, root.Weight);
-                    return;
                 }
                 else
                 {
@@ -299,12 +344,52 @@ namespace DecisionTree
 
                     newChild.IsLeaf = false;
                     newChild.SplitAttributeIndex = i;
-                    newChild.Weight = examplesVi[i].numInstances() / S.attribute(maxGainAttribute).numValues();
+                    newChild.Weight = examplesVi[i].numInstances() / (double)totalExamplesVi;
                     this.TrainRecursive(newChild, examplesVi[i], targetAttributeIndex, newAttributeIndexes, confidenceLevel);
                 }
 
             }
 
+        }
+
+        private double CalculateGainRatio(Instances S, int attributeIndex, int targetAttributeIndex)
+        {
+            double gain = this.CalculateGain(S, attributeIndex, targetAttributeIndex);
+            double splitInformation = this.CalculateSplitInformation(S, attributeIndex);
+
+            return gain / splitInformation;
+        }
+
+        private double CalculateSplitInformation(Instances S, int attributeIndex)
+        {
+            int numAttributeValues = S.attribute(attributeIndex).numValues();
+            int[] valueCounts = new int[numAttributeValues];
+            int numInstances = 0;
+
+            // Count how many attributes of each attribute value
+            for (int i = 0; i < S.numInstances(); i++)
+            {
+                double value = S.instance(i).value(attributeIndex);
+
+                if (Double.IsNaN(value))
+                {
+                    Log.LogVerbose("IsNaN encountered calculating split information for attribute {0}", attributeIndex);
+                    continue;
+                }
+
+                numInstances++;
+                valueCounts[(int)value]++;
+            }
+
+            // Calculate Split Information
+            double splitInformation = 0;
+            for (int i = 0; i < numAttributeValues; i++)
+            {
+                double temp = valueCounts[i] / (double)numInstances;
+                splitInformation += -1 * temp * Math.Log(temp, 2);
+            }
+
+            return splitInformation;
         }
 
         private double CalculateGain(Instances S, int attributeIndex, int targetAttributeIndex)

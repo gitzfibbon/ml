@@ -23,8 +23,15 @@ namespace DecisionTree
             
             Log.LogStats("ChiSquared pValue is {0} and threshold is {1}", pValue, threshold);
             
-            bool result = (pValue <= threshold);
-            return result;
+            if (Double.IsNaN(pValue))
+            {
+                return false;
+            }
+            else
+            {
+                bool result = (pValue <= threshold);
+                return result;
+            }
         }
 
         private static double ApproximateChiSquared(Instances S, int attributeIndex, int targetAttributeIndex)
@@ -83,7 +90,9 @@ namespace DecisionTree
                 double expectedPi = ChiSquare.ExpectedPi(p, n, pi, ni);
                 double expectedNi = ChiSquare.ExpectedNi(p, n, pi, ni);
 
-                chiSquaredStatistic += (Math.Pow(pi - expectedPi, 2) / expectedPi) + (Math.Pow(ni - expectedNi, 2) / expectedNi);
+                double piTerm = expectedPi == 0 ? 0 : Math.Pow(pi - expectedPi, 2) / expectedPi;
+                double niTerm = expectedNi == 0 ? 0 : Math.Pow(ni - expectedNi, 2) / expectedNi;
+                chiSquaredStatistic += piTerm + niTerm;
             }
 
             return chiSquaredStatistic;
