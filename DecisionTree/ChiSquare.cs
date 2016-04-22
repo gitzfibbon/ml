@@ -15,6 +15,8 @@ namespace DecisionTree
         /// </summary>
         public static bool ChiSquaredTest(double confidenceInterval, Instances S, int attributeIndex, int targetAttributeIndex)
         {
+            attributeIndex = 89;
+
             double threshold = 1 - confidenceInterval;
 
             int df = S.attribute(attributeIndex).numValues() - 1;
@@ -93,6 +95,10 @@ namespace DecisionTree
                 double piTerm = expectedPi == 0 ? 0 : Math.Pow(pi - expectedPi, 2) / expectedPi;
                 double niTerm = expectedNi == 0 ? 0 : Math.Pow(ni - expectedNi, 2) / expectedNi;
                 chiSquaredStatistic += piTerm + niTerm;
+            }
+
+            if (Double.IsNaN(chiSquaredStatistic))
+            {
             }
 
             return chiSquaredStatistic;
