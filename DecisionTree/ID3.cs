@@ -337,11 +337,11 @@ namespace DecisionTree
                 {
                     newChild.IsLeaf = true;
                     newChild.TargetValue = mostCommonTargetValue;
-                    Log.LogInfo("No instances to split on. Node with split {0}, value {1}, leaf {2}, weight {3}", root.SplitAttributeIndex, root.TargetValue, root.IsLeaf, root.Weight);
+                    Log.LogInfo("No instances to split on. Create new leaf child from parent split {0}, new value {1}", root.SplitAttributeIndex, newChild.TargetValue, root.IsLeaf, root.Weight);
                 }
                 else
                 {
-                    Log.LogInfo("Splitting. Node with split {0}, value {1}, leaf {2}, weight {3}", root.SplitAttributeIndex, root.TargetValue, root.IsLeaf, root.Weight);
+                    Log.LogInfo("Splitting from node with split {0}, value {1}, leaf {2}, weight {3}", root.SplitAttributeIndex, root.TargetValue, root.IsLeaf, root.Weight);
 
                     newChild.IsLeaf = false;
                     newChild.SplitAttributeIndex = i;

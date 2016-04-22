@@ -22,6 +22,10 @@ class MainClass
             testingSetPath = args[2];
         }
 
+        Console.WriteLine("confidenceLevel is {0}", confidenceLevel);
+        Console.WriteLine("trainingSetPath is {0}", trainingSetPath);
+        Console.WriteLine("testingSetPath is {0}", testingSetPath);
+
         ID3 id3 = new ID3();
         ID3Node root = id3.Train(trainingSetPath, confidenceLevel);
         id3.Test(testingSetPath, root);
