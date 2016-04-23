@@ -7,7 +7,7 @@ class MainClass
     {
         //Log.GainOn = true;
         //Log.InfoOn = true;
-        Log.NodeOn = true;
+        //Log.NodeOn = true;
         Log.StatsOn = true;
         //Log.VerboseOn = true;
 
