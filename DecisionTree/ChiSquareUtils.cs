@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace DecisionTree
 {
     // Adapted from http://www.vvlasov.com/2013/06/how-to-calculate-pvalue-from-chisquare.html
+    // Calculates pValues based off chi-square estimates and degrees of freedom. Ie. same purpose as critical value table lookup.
 
     public class ChiSquareUtils {
         private static double LOG_SQRT_PI = Math.Log(Math.Sqrt(Math.PI));

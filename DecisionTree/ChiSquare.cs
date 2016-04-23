@@ -22,8 +22,8 @@ namespace DecisionTree
             int df = S.attribute(attributeIndex).numValues() - 1;
             double chiSquaredStatistic = ChiSquare.ApproximateChiSquared(S, attributeIndex, targetAttributeIndex);
             double pValue = ChiSquareUtils.pochisq(chiSquaredStatistic, df);
-            
-            Log.LogStats("ChiSquared pValue is {0} and threshold is {1}", pValue, threshold);
+
+            Log.LogInfo("ChiSquared pValue is {0} and threshold is {1}", pValue, threshold);
             
             if (Double.IsNaN(pValue))
             {

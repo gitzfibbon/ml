@@ -8,6 +8,9 @@ using weka.core;
 
 namespace DecisionTree
 {
+    /// <summary>
+    /// The node class plus some helper methods
+    /// </summary>
     public class ID3Node
     {
         public bool IsLeaf = false;
@@ -25,10 +28,10 @@ namespace DecisionTree
             if (node.IsLeaf) { return 1; }
 
             int maxDepth = 0;
-            for (int i=0; i<node.ChildNodes.Count(); i++)
+            for (int i = 0; i < node.ChildNodes.Count(); i++)
             {
                 int childMaxDepth = MaxDepth(node.ChildNodes[i]);
-                if (childMaxDepth  > maxDepth)
+                if (childMaxDepth > maxDepth)
                 {
                     maxDepth = childMaxDepth;
                 };
@@ -61,30 +64,52 @@ namespace DecisionTree
 
             if (node.IsLeaf == true)
             {
-                output = String.Format("Leaf ({0}) from ({1})", instances.attribute(targetAttribute).value(node.TargetValue), instances.attribute(node.SplitAttributeIndex).name());
+                string value = instances.attribute(targetAttribute).value(node.TargetValue);
+                output = String.Format("Leaf {0} with Weight {1}", value, node.Weight);
             }
             else
             {
-                output = String.Format("Split ({0})", instances.attribute(node.SplitAttributeIndex).name());
+                int numChildren = node.ChildNodes.Count();
+                List<string> childValues = new List<string>();
+                for (int i = 0; i < instances.attribute(node.SplitAttributeIndex).numValues(); i++)
+                {
+                    childValues.Add(instances.attribute(node.SplitAttributeIndex).value(i));
+                }
+                output = String.Format("Split {0} with {1} children: {2}", instances.attribute(node.SplitAttributeIndex).name(), numChildren, String.Join(",", childValues));
             }
 
             Console.WriteLine(output);
         }
 
-        public static void BFS(ID3Node root, Instances instances)
+        public static void DFS(ID3Node root, Instances instances)
         {
-            Queue<ID3Node> q = new Queue<ID3Node>();
-            q.Enqueue(root);//You don't need to write the root here, it will be written in the loop
-            while (q.Count() > 0)
-            {
-                ID3Node n = q.Dequeue();
-                ID3Node.Print(n, instances);
+            ID3Node.Print(root, instances);
 
-                foreach (ID3Node child in n.ChildNodes)
-                {
-                    q.Enqueue(child);
-                }
+            if (root.IsLeaf)
+            {
+                return;
+            }
+
+            for (int i = 0; i < root.ChildNodes.Count(); i++)
+            {
+                ID3Node.DFS(root.ChildNodes[i], instances);
             }
         }
+
+        //public static void BFS(ID3Node root, Instances instances)
+        //{
+        //    Queue<ID3Node> q = new Queue<ID3Node>();
+        //    q.Enqueue(root);//You don't need to write the root here, it will be written in the loop
+        //    while (q.Count() > 0)
+        //    {
+        //        ID3Node n = q.Dequeue();
+        //        ID3Node.Print(n, instances);
+
+        //        foreach (ID3Node child in n.ChildNodes)
+        //        {
+        //            q.Enqueue(child);
+        //        }
+        //    }
+        //}
     }
 }

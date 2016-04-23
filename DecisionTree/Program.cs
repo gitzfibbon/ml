@@ -5,9 +5,9 @@ class MainClass
 {
     public static void Main(string[] args)
     {
-        Log.GainOn = true;
-        Log.InfoOn = true;
-        Log.NodeOn = false;
+        //Log.GainOn = true;
+        //Log.InfoOn = true;
+        Log.NodeOn = true;
         Log.StatsOn = true;
         //Log.VerboseOn = true;
 

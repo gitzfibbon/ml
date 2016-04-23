@@ -158,7 +158,7 @@ namespace DecisionTree
 
             if (Log.NodeOn == true)
             {
-                ID3Node.BFS(this.RootNode, S);
+                ID3Node.DFS(this.RootNode, S);
             }
 
             Log.LogStats("Number of Nodes is {0}", ID3Node.NodeCount(this.RootNode));
@@ -260,7 +260,6 @@ namespace DecisionTree
                 {
                     sortedGainList.Add(gain, i);
                 }
-
 
             }
 
