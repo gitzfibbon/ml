@@ -27,9 +27,9 @@ namespace CollaborativeFiltering
         // We will maintain several data structures to optimize speed over memory.
         public List<double[]> TrainingData; // all of the training data 3-tuples
         public List<double[]> TestingData; // all of the testing data 3-tuples
-        public ConcurrentDictionary<double, double> User_AverageRatings; // Hashtable lookup by user for their average rating
-        public ConcurrentDictionary<double, ConcurrentDictionary<double, double>> User_Items; // Hashtable lookup by user all their rated items
-        public ConcurrentDictionary<double, double> Item_Users; // Hashtable lookup by item which users rated them
+        public Dictionary<double, double> User_AverageRatings; // Hashtable lookup by user for their average rating
+        public Dictionary<double, Dictionary<double, double>> User_Items; // Hashtable lookup by user all their rated items
+        public Dictionary<double, HashSet<double>> Item_Users; // Hashtable lookup by item which users rated them
 
 
         // Implements 2.1 Eq. 1
@@ -104,22 +104,58 @@ namespace CollaborativeFiltering
         {
             // Populate the other data structures of training data
             this.LoadData(trainingSetPath, out this.TrainingData);
-            this.User_AverageRatings = new ConcurrentDictionary<double, double>();
-            this.User_Items = new ConcurrentDictionary<double, ConcurrentDictionary<double, double>>();
-            this.Item_Users = new ConcurrentDictionary<double, double>();
+            this.User_AverageRatings = new Dictionary<double, double>();
+            this.User_Items = new Dictionary<double, Dictionary<double, double>>();
+            this.Item_Users = new Dictionary<double, HashSet<double>>();
 
             for (int i = 0; i < this.TrainingData.Count(); i++)
             {
                 double userId = this.TrainingData[i][CF.UserIdColumn];
                 double itemId = this.TrainingData[i][CF.ItemIdColumn];
                 double rating = this.TrainingData[i][CF.RatingColumn];
+
+                // Users
+                if (!this.User_Items.ContainsKey(userId))
+                {
+                    this.User_Items.Add(userId, new Dictionary<double, double>());
+                }
+
+                if (!this.User_Items[userId].ContainsKey(itemId))
+                {
+                    this.User_Items[userId].Add(itemId, rating);
+                }
+
+                // Items
+                if (!this.Item_Users.ContainsKey(itemId))
+                {
+                    this.Item_Users.Add(itemId, new HashSet<double>());
+                }
+
+                if (!this.Item_Users[itemId].Contains(userId))
+                {
+                    this.Item_Users[itemId].Add(userId);
+                }
+            }
+
+            // Calculate average rating per user
+            foreach (double userId in this.User_Items.Keys)
+            {
+                double numItems = this.User_Items[userId].Count();
+                double sum = 0;
                 
-                this.User_Items.TryAdd(userId, new ConcurrentDictionary<double, double>());
-                this.User_Items[userId].TryAdd(itemId, rating);
+                foreach (double rating in this.User_Items[userId].Values)
+                {
+                    sum += rating;
+                }
+
+                double averageRating = sum / numItems;
+                this.User_AverageRatings.Add(userId, averageRating);
 
             }
 
             Console.WriteLine(this.User_Items.Count());
+            Console.WriteLine(this.Item_Users.Count());
+            Console.WriteLine(this.User_AverageRatings.Count());
 
             this.LoadData(testingSetPath, out this.TestingData);
         }
