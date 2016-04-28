@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>f60aa524-87c5-4ddc-a9ae-b33bf57551ee</ProjectGuid>
+    <ProjectGuid>{35636B3A-6783-440B-935E-864E61E0F227}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CollaborativeFiltering</RootNamespace>
@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="CF.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
