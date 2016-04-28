@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -17,17 +18,17 @@ namespace CollaborativeFiltering
 
     public class CF
     {
-        private const char Delimiter = ','; 
+        private const char Delimiter = ',';
         private const int NumColumns = 3;
-        private const int MovieIdColumn = 0;
+        private const int ItemIdColumn = 0;
         private const int UserIdColumn = 1;
         private const int RatingColumn = 2;
 
         // We will maintain several data structures to optimize speed over memory.
-        public double[,] TrainingData; // all of the training data 3-tuples
-        public double[,] TestingData; // all of the testing data 3-tuples
+        public List<double[]> TrainingData; // all of the training data 3-tuples
+        public List<double[]> TestingData; // all of the testing data 3-tuples
         public ConcurrentDictionary<double, double> User_AverageRatings; // Hashtable lookup by user for their average rating
-        public ConcurrentDictionary<double, double[,]> User_Items; // Hashtable lookup by user all their rated items
+        public ConcurrentDictionary<double, ConcurrentDictionary<double, double>> User_Items; // Hashtable lookup by user all their rated items
         public ConcurrentDictionary<double, double> Item_Users; // Hashtable lookup by item which users rated them
 
 
@@ -48,14 +49,14 @@ namespace CollaborativeFiltering
             double v_ij = 0; // the other users rating for item j
             // loop
 
-                w = this.GetWeight(a, i);
-                k += Math.Abs(w);
+            w = this.GetWeight(a, i);
+            k += Math.Abs(w);
 
-                // get mean_v_i
-                // get user i's rating for movie j
+            // get mean_v_i
+            // get user i's rating for movie j
 
-                sum += w * (v_ij - mean_v_i);
-                
+            sum += w * (v_ij - mean_v_i);
+
 
             // endloop
 
@@ -77,11 +78,11 @@ namespace CollaborativeFiltering
 
             // Iterate over all common items
             // loop
-                
-                // Calculate A = v_a - mean_a
-                // Calculate I = v_i - mean_i
-                // Get the product A and I and of these two and add it to a running sum (NUMER)
-                // Get the A^2 and I^2 and add to a running sum (DENOM_A and DENOM_I)
+
+            // Calculate A = v_a - mean_a
+            // Calculate I = v_i - mean_i
+            // Get the product A and I and of these two and add it to a running sum (NUMER)
+            // Get the A^2 and I^2 and add to a running sum (DENOM_A and DENOM_I)
 
             // endloop
 
@@ -102,38 +103,31 @@ namespace CollaborativeFiltering
         public void LoadData(string trainingSetPath, string testingSetPath)
         {
             // Populate the other data structures of training data
-            List<double[]> TrainingData = new List<double[]>();
-            this.LoadData(trainingSetPath, out TrainingData);
+            this.LoadData(trainingSetPath, out this.TrainingData);
             this.User_AverageRatings = new ConcurrentDictionary<double, double>();
-            this.User_Items = new ConcurrentDictionary<double, double[,]>();
+            this.User_Items = new ConcurrentDictionary<double, ConcurrentDictionary<double, double>>();
             this.Item_Users = new ConcurrentDictionary<double, double>();
 
-            long sum = 0;
-            for (int i = 0; i < TrainingData.Count(); i++)
+            for (int i = 0; i < this.TrainingData.Count(); i++)
             {
-                sum++;
-            }
-            Console.WriteLine(sum);
+                double userId = this.TrainingData[i][CF.UserIdColumn];
+                double itemId = this.TrainingData[i][CF.ItemIdColumn];
+                double rating = this.TrainingData[i][CF.RatingColumn];
+                
+                this.User_Items.TryAdd(userId, new ConcurrentDictionary<double, double>());
+                this.User_Items[userId].TryAdd(itemId, rating);
 
-            this.LoadData(testingSetPath, out TrainingData);
+            }
+
+            Console.WriteLine(this.User_Items.Count());
+
+            this.LoadData(testingSetPath, out this.TestingData);
         }
 
         private void LoadData(string filePath, out List<double[]> data)
         {
-            //int numLines = 0;
-
-            //// Do one pass of the file to figure out how many examples we will need to allocate for
-            //using (StreamReader sr = File.OpenText(filePath))
-            //{
-            //    while (sr.ReadLine() != null)
-            //    {
-            //        numLines++;
-            //    }
-            //}
-
             // Load the data into an array
             data = new List<double[]>();
-            int i = 0;
             using (StreamReader sr = File.OpenText(filePath))
             {
                 string s = String.Empty;
@@ -141,65 +135,13 @@ namespace CollaborativeFiltering
                 {
                     string[] sParts = s.Split(CF.Delimiter);
                     double[] item = new double[3];
-                    item[CF.MovieIdColumn] = Double.Parse(sParts[CF.MovieIdColumn]);
+                    item[CF.ItemIdColumn] = Double.Parse(sParts[CF.ItemIdColumn]);
                     item[CF.UserIdColumn] = Double.Parse(sParts[CF.UserIdColumn]);
                     item[CF.RatingColumn] = Double.Parse(sParts[CF.RatingColumn]);
                     data.Add(item);
-                    i++;
                 }
             }
-
         }
-
-
-        //public void LoadData(string trainingSetPath, string testingSetPath)
-        //{
-        //    // Populate the other data structures of training data
-        //    this.LoadData(trainingSetPath, out this.TrainingData);
-        //    this.User_AverageRatings = new ConcurrentDictionary<double, double>();
-        //    this.User_Items = new ConcurrentDictionary<double, double[,]>();
-        //    this.Item_Users = new ConcurrentDictionary<double, double>();
-
-        //    long sum = 0;
-        //    for (int i = 0; i < this.TrainingData.GetLength(0); i++)
-        //    {
-        //        sum++;
-        //    }
-        //    Console.WriteLine(sum);
-
-        //    this.LoadData(testingSetPath, out this.TestingData);
-        //}
-
-        //private void LoadData(string filePath, out double[,] data)
-        //{
-        //    int numLines = 0;
-
-        //    // Do one pass of the file to figure out how many examples we will need to allocate for
-        //    using (StreamReader sr = File.OpenText(filePath))
-        //    {
-        //        while (sr.ReadLine() != null)
-        //        {
-        //            numLines++;
-        //        }
-        //    }
-
-        //    // Load the data into an array
-        //    data = new double[numLines, CF.NumColumns];
-        //    int i = 0;
-        //    using (StreamReader sr = File.OpenText(filePath))
-        //    {
-        //        string s = String.Empty;
-        //        while ((s = sr.ReadLine()) != null)
-        //        {
-        //            string[] sParts = s.Split(CF.Delimiter);
-        //            data[i, CF.MovieIdColumn] = Double.Parse(sParts[CF.MovieIdColumn]);
-        //            data[i, CF.UserIdColumn] = Double.Parse(sParts[CF.UserIdColumn]);
-        //            data[i, CF.RatingColumn] = Double.Parse(sParts[CF.RatingColumn]);
-        //            i++;
-        //        }
-        //    }
-
-        //}
 
     }
 }
