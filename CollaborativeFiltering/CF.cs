@@ -102,11 +102,15 @@ namespace CollaborativeFiltering
 
         public void LoadData(string trainingSetPath, string testingSetPath)
         {
+            Log.LogImportant("Initializing the training data");
+
             // Populate the other data structures of training data
             this.LoadData(trainingSetPath, out this.TrainingData);
             this.User_AverageRatings = new Dictionary<double, double>();
             this.User_Items = new Dictionary<double, Dictionary<double, double>>();
             this.Item_Users = new Dictionary<double, HashSet<double>>();
+
+            Log.LogImportant("Pre-populating user-item and item-user lookup tables");
 
             for (int i = 0; i < this.TrainingData.Count(); i++)
             {
@@ -137,6 +141,8 @@ namespace CollaborativeFiltering
                 }
             }
 
+            Log.LogImportant("Pre-calculating user average ratings");
+
             // Calculate average rating per user
             foreach (double userId in this.User_Items.Keys)
             {
@@ -153,15 +159,18 @@ namespace CollaborativeFiltering
 
             }
 
-            Console.WriteLine(this.User_Items.Count());
-            Console.WriteLine(this.Item_Users.Count());
-            Console.WriteLine(this.User_AverageRatings.Count());
+            Log.LogImportant("Finished initializing training data with {0} users, {1} items", this.User_Items.Count(), this.Item_Users.Count());
 
+            Log.LogImportant("Initializing the testing data");
             this.LoadData(testingSetPath, out this.TestingData);
+            Log.LogImportant("Finished initializing the testing data");
+
         }
 
         private void LoadData(string filePath, out List<double[]> data)
         {
+            Log.LogImportant("Loading from {0}", filePath);
+
             // Load the data into an array
             data = new List<double[]>();
             using (StreamReader sr = File.OpenText(filePath))
@@ -177,6 +186,9 @@ namespace CollaborativeFiltering
                     data.Add(item);
                 }
             }
+
+            Log.LogImportant("Done loading {0} items", data.Count());
+
         }
 
     }

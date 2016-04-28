@@ -20,8 +20,8 @@ namespace CollaborativeFiltering
                 testingSetPath = args[1];
             }
 
-            Console.WriteLine("trainingSetPath is {0}", trainingSetPath);
-            Console.WriteLine("testingSetPath is {0}", testingSetPath);
+            Log.LogAlways("trainingSetPath is {0}", trainingSetPath);
+            Log.LogAlways("testingSetPath is {0}", testingSetPath);
 
             CF cf = new CF();
             cf.LoadData(trainingSetPath, testingSetPath);
