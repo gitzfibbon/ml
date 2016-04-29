@@ -30,6 +30,7 @@ namespace CollaborativeFiltering
         public Dictionary<double, double> User_AverageRatings; // Hashtable lookup by user for their average rating
         public Dictionary<double, Dictionary<double, double>> User_Items; // Hashtable lookup by user all their rated items
         public Dictionary<double, HashSet<double>> Item_Users; // Hashtable lookup by item which users rated them
+        public Dictionary<double, Dictionary<double, List<double>>> User_Common_Items; // Common Items between two users (Key is the lower of the two user Ids)
 
         public void PredictAll()
         {
@@ -96,7 +97,7 @@ namespace CollaborativeFiltering
         }
 
         // Implements 2.1 Eq. 2
-        public double GetWeight(double activeUserId, double otherUserId)
+        private double GetWeight(double activeUserId, double otherUserId)
         {
             double a = activeUserId;
             double i = otherUserId;
@@ -131,6 +132,40 @@ namespace CollaborativeFiltering
             return weight;
         }
 
+        private List<double> GetCommonItems(double userId1, double userId2)
+        {
+            // The minUserId is always stored as the first key
+            double minUserId = Math.Min(userId1, userId2);
+            double maxUserId = Math.Max(userId1, userId2);
+
+            // Check if the list has already been discovered and if not, add it to the data structure
+            if (this.User_Common_Items.ContainsKey(minUserId))
+            {
+                if (this.User_Common_Items[minUserId].ContainsKey(maxUserId))
+                {
+                    // If we get here we already calculated common items for these users
+                    return this.User_Common_Items[minUserId][maxUserId];
+                }
+                else
+                {
+                    // We need to add the common items and return
+                    this.User_Common_Items[minUserId].Add(maxUserId, this.DetermineCommonItems(userId1, userId2));
+                    return this.User_Common_Items[minUserId][maxUserId];
+                }
+            }
+
+            // If we get this far, we need to add a new key to the dictionary for the minUserId and then add common items
+            this.User_Common_Items.Add(minUserId, new Dictionary<double, List<double>>());
+            this.User_Common_Items[minUserId].Add(maxUserId, this.DetermineCommonItems(userId1, userId2));
+            return this.User_Common_Items[minUserId][maxUserId];
+
+        }
+
+        private List<double> DetermineCommonItems(double userId1, double userId2)
+        {
+            return null;
+        }
+
         public void Initialize(string trainingSetPath, string testingSetPath)
         {
             Log.LogImportant("Initializing the training data");
@@ -140,6 +175,7 @@ namespace CollaborativeFiltering
             this.User_AverageRatings = new Dictionary<double, double>();
             this.User_Items = new Dictionary<double, Dictionary<double, double>>();
             this.Item_Users = new Dictionary<double, HashSet<double>>();
+            this.User_Common_Items = new Dictionary<double, Dictionary<double, List<double>>>();
 
             Log.LogImportant("Pre-populating user-item and item-user lookup tables");
 
