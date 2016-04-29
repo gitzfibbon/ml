@@ -31,35 +31,66 @@ namespace CollaborativeFiltering
         public Dictionary<double, Dictionary<double, double>> User_Items; // Hashtable lookup by user all their rated items
         public Dictionary<double, HashSet<double>> Item_Users; // Hashtable lookup by item which users rated them
 
+        public void PredictAll()
+        {
+            //for (int i=0; i < this.TestingData.Count(); i++)
+            for (int i = 0; i < 5; i++)
+            {
+                double userId = this.TestingData[i][CF.UserIdColumn];
+                double itemId = this.TestingData[i][CF.ItemIdColumn];
+                double actualRating = this.TestingData[i][CF.RatingColumn];
+                double predictedRating = this.PredictVote(userId, itemId);
+                Log.LogVerbose("Predict {0}, Actual {1} for user {2} item {3}", predictedRating, actualRating, userId, itemId);
+            }
+        }
 
         // Implements 2.1 Eq. 1
         public double PredictVote(double userId, double itemId)
         {
+            // Declare several variables that will be used over the summation in the equation
             double a = userId;
-
-            // Get the mean vote for a
-            double mean_v_a = 0;
-
-            // Iterate through each user in the collaborative filtering database
-            double sum = 0; // summation from the equation
-            double k = 0; // normalizing factor
+            double j = itemId;
             double w = 0; // weight w(a,i)
-            double i = 0; // the other users we are iterating through
             double mean_v_i = 0; // the other users mean vote
             double v_ij = 0; // the other users rating for item j
-            // loop
+            double sum = 0; // summation from the equation
+            double k = 0; // normalizing factor
 
-            w = this.GetWeight(a, i);
-            k += Math.Abs(w);
+            // Iterate through each user in the collaborative filtering database
+            foreach (double i in this.User_Items.Keys)  // i is the other users we are iterating through
+            {
+                // get the weight
+                w = this.GetWeight(a, i);
 
-            // get mean_v_i
-            // get user i's rating for movie j
+                // if the weight is 0 don't do any more calculations
+                if (w == 0)
+                {
+                    continue;
+                }
 
-            sum += w * (v_ij - mean_v_i);
+                // get user i's rating for item j
+                v_ij = this.User_Items[i][j];
 
 
-            // endloop
+                // TODO: remove
+                if (!this.User_AverageRatings.ContainsKey(i))
+                {
+                }
+                
+                // get the mean vote of user i
+                mean_v_i = this.User_AverageRatings[i];
 
+                // increment running totals
+                k += Math.Abs(w);
+                sum += w * (v_ij - mean_v_i);
+            }
+
+            // TODO: remove
+            if (!this.User_AverageRatings.ContainsKey(a))
+            {
+            }
+
+            double mean_v_a = this.User_AverageRatings[a]; // Mean vote for user a
             double p_aj = mean_v_a - (k * sum);
             return p_aj;
         }
@@ -86,7 +117,7 @@ namespace CollaborativeFiltering
 
             // endloop
 
-            double weight = 0.0;
+            double weight = 0.5;
             // WEIGHT = NUMER / SQRT(DENOM_A * DENOM_I)
 
             // TODO: remove
@@ -100,7 +131,7 @@ namespace CollaborativeFiltering
             return weight;
         }
 
-        public void LoadData(string trainingSetPath, string testingSetPath)
+        public void Initialize(string trainingSetPath, string testingSetPath)
         {
             Log.LogImportant("Initializing the training data");
 

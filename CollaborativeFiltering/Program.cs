@@ -24,9 +24,9 @@ namespace CollaborativeFiltering
             Log.LogAlways("testingSetPath is {0}", testingSetPath);
 
             CF cf = new CF();
-            cf.LoadData(trainingSetPath, testingSetPath);
-            var trainingData = cf.TrainingData;
-            var testingData = cf.TestingData;
+            cf.Initialize(trainingSetPath, testingSetPath);
+            cf.PredictAll();
+            Console.Read();
         }
     }
 }
