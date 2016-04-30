@@ -37,14 +37,14 @@ namespace CollaborativeFiltering
         private int CorrelationReuseCount = 0;
 
 
-        public void PredictAll()
+        public void PredictAll(int? maxPredictions)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
             double absoluteErrorSum = 0;
             double absoluteErrorSquaredSum = 0;
-            int numPredictions = 1000; // this.TestingData.Count();
+            int numPredictions = maxPredictions == null ? this.TestingData.Count() : (int)maxPredictions;
             Parallel.For(0, numPredictions, new ParallelOptions { MaxDegreeOfParallelism = 40 }, i =>
             {
                 double userId = this.TestingData[i][CF.UserIdColumn];
