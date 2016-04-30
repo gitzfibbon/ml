@@ -30,9 +30,12 @@ namespace CollaborativeFiltering
         // We will maintain several data structures to optimize speed over memory.
         public List<double[]> TrainingData; // all of the training data 3-tuples
         public List<double[]> TestingData; // all of the testing data 3-tuples
-        public Dictionary<double, double> User_AverageRatings; // Hashtable lookup by user for their average rating
-        public Dictionary<double, Dictionary<double, double>> User_Items; // Hashtable lookup by user all their rated items
-        public Dictionary<double, HashSet<double>> Item_Users; // Hashtable lookup by item which users rated them
+        //public Dictionary<double, double> User_AverageRatings; // Hashtable lookup by user for their average rating
+        //public Dictionary<double, Dictionary<double, double>> User_Items; // Hashtable lookup by user all their rated items
+        //public Dictionary<double, HashSet<double>> Item_Users; // Hashtable lookup by item which users rated them
+        public ConcurrentDictionary<double, double> User_AverageRatings; // Hashtable lookup by user for their average rating
+        public ConcurrentDictionary<double, ConcurrentDictionary<double, double>> User_Items; // Hashtable lookup by user all their rated items
+        public ConcurrentDictionary<double, HashSet<double>> Item_Users; // Hashtable lookup by item which users rated them
         public ConcurrentDictionary<double, ConcurrentDictionary<double, double>> Correlations; // Stores the correlations between two users
         private int CorrelationReuseCount = 0;
 
@@ -42,35 +45,41 @@ namespace CollaborativeFiltering
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
+
             double absoluteErrorSum = 0;
             double absoluteErrorSquaredSum = 0;
             int numPredictions = maxPredictions == null ? this.TestingData.Count() : (int)maxPredictions;
-            Parallel.For(0, numPredictions, new ParallelOptions { MaxDegreeOfParallelism = 40 }, i =>
+            Log.LogVerbose("i,difference,predicted,actual,user,item,minsElapsed");
+            //Parallel.For(0, numPredictions, new ParallelOptions { MaxDegreeOfParallelism = 40 }, i =>
+            Parallel.For(0, numPredictions, i =>
             {
                 double userId = this.TestingData[i][CF.UserIdColumn];
                 double itemId = this.TestingData[i][CF.ItemIdColumn];
                 double actualRating = this.TestingData[i][CF.RatingColumn];
                 double predictedRating = this.PredictVote(userId, itemId);
                 double absoluteError = Math.Abs(predictedRating - actualRating);
-                
+
                 absoluteErrorSum += absoluteError;
                 absoluteErrorSquaredSum += absoluteError * absoluteError;
 
-                Log.LogImportant("{0}. Difference {1:0.00} Predicted {2:0.00}, Actual {3:0.00} for user {4} item {5}",
-                    i, absoluteError, predictedRating, actualRating, userId, itemId);
+                Log.LogVerbose("{0},{1:0.00},{2:0.00},{3:0.00},{4},{5},{6:0.00}",
+                    i, absoluteError, predictedRating, actualRating, userId, itemId, stopwatch.Elapsed.TotalMinutes);
+
+                //Log.LogImportant("{0}. Difference {1:0.00} Predicted {2:0.00}, Actual {3:0.00} for user {4} item {5}",
+                //    i, absoluteError, predictedRating, actualRating, userId, itemId);
             });
 
             double mae = absoluteErrorSum / numPredictions;
             double rmse = Math.Sqrt(absoluteErrorSquaredSum / numPredictions);
 
             stopwatch.Stop();
-            Log.LogAlways("");
-            Log.LogAlways("Finished Predicting");
-            Log.LogAlways("Number of Predictions: {0}", numPredictions);
-            Log.LogAlways("Prediction Time in Minutes: {0:0.00}", stopwatch.Elapsed.TotalMinutes);
-            Log.LogAlways("MAE: {0:0.0000}", mae);
-            Log.LogAlways("RMSE: {0:0.0000}", rmse);
-            Log.LogImportant("Reused Correlation Calculations: {0}", this.CorrelationReuseCount);
+            Log.LogImportant("");
+            Log.LogImportant("Finished Predicting");
+            Log.LogImportant("Number of Predictions: {0}", numPredictions);
+            Log.LogImportant("Prediction Time in Minutes: {0:0.00}", stopwatch.Elapsed.TotalMinutes);
+            Log.LogImportant("MAE: {0:0.0000}", mae);
+            Log.LogImportant("RMSE: {0:0.0000}", rmse);
+            Log.LogVerbose("Reused Correlation Calculations: {0}", this.CorrelationReuseCount);
         }
 
         // Implements 2.1 Eq. 1
@@ -204,12 +213,13 @@ namespace CollaborativeFiltering
 
             if (Double.IsNaN(weight))
             {
-                Log.LogVerbose("Weight is NaN for users {0} and {1}. Setting it to 0.", a, i);
+                Log.LogPedantic("Weight is NaN for users {0} and {1}. Setting it to 0.", a, i);
                 weight = 0;
             }
 
+            // NEVER SAVE THE WEIGHT (?)
             // Save the weight so we don't have to calculate it again
-            this.SaveWeight(a, i, weight);
+            //this.SaveWeight(a, i, weight);
 
             // TODO: remove
             if (weight == 0)
@@ -234,7 +244,7 @@ namespace CollaborativeFiltering
                 if (this.Correlations[minUserId].ContainsKey(maxUserId))
                 {
                     // If we get here we already calculated the weight for these users
-                    Log.LogVerbose("Found stored weight for users {0} and {1}", userId1, userId2);
+                    Log.LogPedantic("Found stored weight for users {0} and {1}", userId1, userId2);
                     CorrelationReuseCount++;
                     return this.Correlations[minUserId][maxUserId];
                 }
@@ -277,16 +287,16 @@ namespace CollaborativeFiltering
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            Log.LogImportant("Initializing the training data");
+            Log.LogVerbose("Initializing the training data");
 
             // Populate the other data structures of training data
             this.LoadData(trainingSetPath, out this.TrainingData);
-            this.User_AverageRatings = new Dictionary<double, double>();
-            this.User_Items = new Dictionary<double, Dictionary<double, double>>();
-            this.Item_Users = new Dictionary<double, HashSet<double>>();
+            this.User_AverageRatings = new ConcurrentDictionary<double, double>();
+            this.User_Items = new ConcurrentDictionary<double, ConcurrentDictionary<double, double>>();
+            this.Item_Users = new ConcurrentDictionary<double, HashSet<double>>();
             this.Correlations = new ConcurrentDictionary<double, ConcurrentDictionary<double, double>>();
 
-            Log.LogImportant("Pre-populating user-item and item-user lookup tables");
+            Log.LogVerbose("Pre-populating user-item and item-user lookup tables");
 
             for (int i = 0; i < this.TrainingData.Count(); i++)
             {
@@ -297,18 +307,18 @@ namespace CollaborativeFiltering
                 // Users
                 if (!this.User_Items.ContainsKey(userId))
                 {
-                    this.User_Items.Add(userId, new Dictionary<double, double>());
+                    this.User_Items.TryAdd(userId, new ConcurrentDictionary<double, double>());
                 }
 
                 if (!this.User_Items[userId].ContainsKey(itemId))
                 {
-                    this.User_Items[userId].Add(itemId, rating);
+                    this.User_Items[userId].TryAdd(itemId, rating);
                 }
 
                 // Items
                 if (!this.Item_Users.ContainsKey(itemId))
                 {
-                    this.Item_Users.Add(itemId, new HashSet<double>());
+                    this.Item_Users.TryAdd(itemId, new HashSet<double>());
                 }
 
                 if (!this.Item_Users[itemId].Contains(userId))
@@ -317,7 +327,7 @@ namespace CollaborativeFiltering
                 }
             }
 
-            Log.LogImportant("Pre-calculating user average ratings");
+            Log.LogVerbose("Pre-calculating user average ratings");
 
             // Calculate average rating per user
             foreach (double userId in this.User_Items.Keys)
@@ -331,23 +341,23 @@ namespace CollaborativeFiltering
                 }
 
                 double averageRating = sum / numItems;
-                this.User_AverageRatings.Add(userId, averageRating);
+                this.User_AverageRatings.TryAdd(userId, averageRating);
 
             }
 
-            Log.LogImportant("Finished initializing training data with {0} users, {1} items", this.User_Items.Count(), this.Item_Users.Count());
+            Log.LogVerbose("Finished initializing training data with {0} users, {1} items", this.User_Items.Count(), this.Item_Users.Count());
 
-            Log.LogImportant("Initializing the testing data");
+            Log.LogVerbose("Initializing the testing data");
             this.LoadData(testingSetPath, out this.TestingData);
 
             stopwatch.Stop();
-            Log.LogImportant("Finished initializing the testing data. Elapsed time {0} seconds.", stopwatch.Elapsed.TotalSeconds);
-            
+            Log.LogVerbose("Finished initializing the testing data. Elapsed time {0} seconds.", stopwatch.Elapsed.TotalSeconds);
+
         }
 
         private void LoadData(string filePath, out List<double[]> data)
         {
-            Log.LogImportant("Loading from {0}", filePath);
+            Log.LogVerbose("Loading from {0}", filePath);
 
             // Load the data into an array
             data = new List<double[]>();
@@ -365,7 +375,7 @@ namespace CollaborativeFiltering
                 }
             }
 
-            Log.LogImportant("Done loading {0} items", data.Count());
+            Log.LogVerbose("Done loading {0} items", data.Count());
 
         }
 

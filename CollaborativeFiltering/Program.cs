@@ -29,21 +29,25 @@ namespace CollaborativeFiltering
                 }
             }
 
-            Log.LogAlwaysOn = true;
-            Log.LogImportantOn = logVerbose;
-            Log.LogVerboseOn = false;
-            Log.LogAlways("");
-            Log.LogAlways("Training Set Path is {0}", trainingSetPath);
-            Log.LogAlways("Testing Set Path is {0}", testingSetPath);
-            Log.LogAlways("Max Predictions is {0}", maxPredictions);
-            Log.LogAlways("Verbose Logging is {0}", logVerbose);
+            Log.LogImportantOn = true;
+            Log.LogVerboseOn = logVerbose;
+            Log.LogPedanticOn = false;
+            Log.LogImportant("");
+            Log.LogImportant("Training Set Path is {0}", trainingSetPath);
+            Log.LogImportant("Testing Set Path is {0}", testingSetPath);
+            Log.LogImportant("Max Predictions is {0}", maxPredictions);
+            Log.LogImportant("Verbose Logging is {0}", logVerbose);
 
             CF cf = new CF();
             cf.Initialize(trainingSetPath, testingSetPath);
             cf.PredictAll(maxPredictions <= 0 ? null : (int?)maxPredictions);
             Console.WriteLine();
-            Console.WriteLine("Done. Press the anykey to continue.");
-            Console.Read();
+
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                Console.WriteLine("Done. Press the anykey to continue.");
+                Console.Read();
+            }
         }
     }
 }
