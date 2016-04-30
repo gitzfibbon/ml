@@ -16,7 +16,9 @@ namespace CollaborativeFiltering
     // http://courses.cs.washington.edu/courses/csep546/16sp/psetwww/2/algsweb.pdf 
     // 
     // Variable names will try to match the notation in the referenced paper.
-
+    //
+    // MAE of around ~.69 and RMSE of around ~.88 are in the correct range
+    //
     public class CF
     {
         private const char Delimiter = ',';
@@ -32,6 +34,7 @@ namespace CollaborativeFiltering
         public Dictionary<double, Dictionary<double, double>> User_Items; // Hashtable lookup by user all their rated items
         public Dictionary<double, HashSet<double>> Item_Users; // Hashtable lookup by item which users rated them
         public ConcurrentDictionary<double, ConcurrentDictionary<double, double>> Correlations; // Stores the correlations between two users
+        private int CorrelationReuseCount = 0;
 
 
         public void PredictAll()
@@ -39,23 +42,39 @@ namespace CollaborativeFiltering
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            //for (int i=0; i < this.TestingData.Count(); i++)
-            Parallel.For(0, 5000, i =>
+            double absoluteErrorSum = 0;
+            double absoluteErrorSquaredSum = 0;
+            int numPredictions = 1000; // this.TestingData.Count();
+            Parallel.For(0, numPredictions, new ParallelOptions { MaxDegreeOfParallelism = 40 }, i =>
             {
                 double userId = this.TestingData[i][CF.UserIdColumn];
                 double itemId = this.TestingData[i][CF.ItemIdColumn];
                 double actualRating = this.TestingData[i][CF.RatingColumn];
                 double predictedRating = this.PredictVote(userId, itemId);
+                double absoluteError = Math.Abs(predictedRating - actualRating);
+                
+                absoluteErrorSum += absoluteError;
+                absoluteErrorSquaredSum += absoluteError * absoluteError;
+
                 Log.LogImportant("{0}. Difference {1:0.00} Predicted {2:0.00}, Actual {3:0.00} for user {4} item {5}",
-                    i, Math.Abs(predictedRating - actualRating), predictedRating, actualRating, userId, itemId);
+                    i, absoluteError, predictedRating, actualRating, userId, itemId);
             });
 
+            double mae = absoluteErrorSum / numPredictions;
+            double rmse = Math.Sqrt(absoluteErrorSquaredSum / numPredictions);
+
             stopwatch.Stop();
-            Log.LogAlways("Finished predicting {0} in {1} minutes", this.TestingData.Count, stopwatch.Elapsed.TotalMinutes);
+            Log.LogAlways("");
+            Log.LogAlways("Finished Predicting");
+            Log.LogAlways("Number of Predictions: {0}", numPredictions);
+            Log.LogAlways("Prediction Time in Minutes: {0:0.00}", stopwatch.Elapsed.TotalMinutes);
+            Log.LogAlways("MAE: {0:0.0000}", mae);
+            Log.LogAlways("RMSE: {0:0.0000}", rmse);
+            Log.LogImportant("Reused Correlation Calculations: {0}", this.CorrelationReuseCount);
         }
 
         // Implements 2.1 Eq. 1
-        public double PredictVote(double userId, double itemId)
+        private double PredictVote(double userId, double itemId)
         {
             // Declare several variables that will be used over the summation in the equation
             double a = userId;
@@ -216,6 +235,7 @@ namespace CollaborativeFiltering
                 {
                     // If we get here we already calculated the weight for these users
                     Log.LogVerbose("Found stored weight for users {0} and {1}", userId1, userId2);
+                    CorrelationReuseCount++;
                     return this.Correlations[minUserId][maxUserId];
                 }
             }

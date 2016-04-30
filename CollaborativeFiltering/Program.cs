@@ -30,7 +30,8 @@ namespace CollaborativeFiltering
             CF cf = new CF();
             cf.Initialize(trainingSetPath, testingSetPath);
             cf.PredictAll();
-            Console.WriteLine("Finished. Press the anykey to continue.");
+            Console.WriteLine();
+            Console.WriteLine("Done. Press the anykey to continue.");
             Console.Read();
         }
     }
