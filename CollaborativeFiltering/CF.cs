@@ -36,9 +36,11 @@ namespace CollaborativeFiltering
 
         public void PredictAll()
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             //for (int i=0; i < this.TestingData.Count(); i++)
-            //for (int i = 0; i < 1000; i++)
-            Parallel.For(0, 1000, i =>
+            Parallel.For(0, 5000, i =>
             {
                 double userId = this.TestingData[i][CF.UserIdColumn];
                 double itemId = this.TestingData[i][CF.ItemIdColumn];
@@ -47,6 +49,9 @@ namespace CollaborativeFiltering
                 Log.LogImportant("{0}. Difference {1:0.00} Predicted {2:0.00}, Actual {3:0.00} for user {4} item {5}",
                     i, Math.Abs(predictedRating - actualRating), predictedRating, actualRating, userId, itemId);
             });
+
+            stopwatch.Stop();
+            Log.LogAlways("Finished predicting {0} in {1} minutes", this.TestingData.Count, stopwatch.Elapsed.TotalMinutes);
         }
 
         // Implements 2.1 Eq. 1
@@ -250,6 +255,8 @@ namespace CollaborativeFiltering
 
         public void Initialize(string trainingSetPath, string testingSetPath)
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             Log.LogImportant("Initializing the training data");
 
             // Populate the other data structures of training data
@@ -312,8 +319,10 @@ namespace CollaborativeFiltering
 
             Log.LogImportant("Initializing the testing data");
             this.LoadData(testingSetPath, out this.TestingData);
-            Log.LogImportant("Finished initializing the testing data");
 
+            stopwatch.Stop();
+            Log.LogImportant("Finished initializing the testing data. Elapsed time {0} seconds.", stopwatch.Elapsed.TotalSeconds);
+            
         }
 
         private void LoadData(string filePath, out List<double[]> data)
