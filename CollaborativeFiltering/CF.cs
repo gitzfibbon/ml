@@ -30,18 +30,19 @@ namespace CollaborativeFiltering
         public Dictionary<double, double> User_AverageRatings; // Hashtable lookup by user for their average rating
         public Dictionary<double, Dictionary<double, double>> User_Items; // Hashtable lookup by user all their rated items
         public Dictionary<double, HashSet<double>> Item_Users; // Hashtable lookup by item which users rated them
-        public Dictionary<double, Dictionary<double, List<double>>> User_Common_Items; // Common Items between two users (Key is the lower of the two user Ids)
+        public ConcurrentDictionary<double, ConcurrentDictionary<double, double>> Correlations; // Stores the correlations between two users
+
 
         public void PredictAll()
         {
             //for (int i=0; i < this.TestingData.Count(); i++)
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 1000; i++)
             {
                 double userId = this.TestingData[i][CF.UserIdColumn];
                 double itemId = this.TestingData[i][CF.ItemIdColumn];
                 double actualRating = this.TestingData[i][CF.RatingColumn];
                 double predictedRating = this.PredictVote(userId, itemId);
-                Log.LogVerbose("Predict {0}, Actual {1} for user {2} item {3}", predictedRating, actualRating, userId, itemId);
+                Log.LogImportant("{0}. Predicted {1}, Actual {2} for user {3} item {4}",i, predictedRating, actualRating, userId, itemId);
             }
         }
 
@@ -58,8 +59,23 @@ namespace CollaborativeFiltering
             double k = 0; // normalizing factor
 
             // Iterate through each user in the collaborative filtering database
-            foreach (double i in this.User_Items.Keys)  // i is the other users we are iterating through
+            foreach (double i in this.Item_Users[itemId])  // i is the other users we are iterating through
             {
+                // Check if this user already rated this item
+                if (i == a)
+                {
+                    return this.User_Items[a][itemId];
+                }
+
+                if (!this.User_Items[i].ContainsKey(j))
+                {
+                    continue;
+                }
+
+                // get user i's rating for item j
+                v_ij = this.User_Items[i][j];
+
+                
                 // get the weight
                 w = this.GetWeight(a, i);
 
@@ -69,15 +85,11 @@ namespace CollaborativeFiltering
                     continue;
                 }
 
-                // get user i's rating for item j
-                v_ij = this.User_Items[i][j];
-
-
                 // TODO: remove
                 if (!this.User_AverageRatings.ContainsKey(i))
                 {
                 }
-                
+
                 // get the mean vote of user i
                 mean_v_i = this.User_AverageRatings[i];
 
@@ -92,34 +104,85 @@ namespace CollaborativeFiltering
             }
 
             double mean_v_a = this.User_AverageRatings[a]; // Mean vote for user a
-            double p_aj = mean_v_a - (k * sum);
+
+            // If k is 0 then just return the active user's mean rating per https://catalyst.uw.edu/gopost/conversation/fsadeghi/961287#3264743
+            if (k == 0)
+            {
+                return mean_v_a;
+            }
+
+            double p_aj = mean_v_a - (sum / k);
+
+            if (Double.IsNaN(p_aj))
+            {
+            }
+
             return p_aj;
         }
 
         // Implements 2.1 Eq. 2
         private double GetWeight(double activeUserId, double otherUserId)
         {
+            // Rename the arguments to match the equations in the paper
             double a = activeUserId;
             double i = otherUserId;
 
+            // Check if we've already calculated the correlation weight for these two users
+            double storedWeight = this.LookupWeight(a,i);
+            if (!Double.IsNaN(storedWeight))
+            {
+                return storedWeight;
+            }
+
             // Get all items common between both users
+            List<double> commonItems = this.GetCommonItems(a, i);
 
-            // Calculate activeUser (a) mean over the common items
-
-            // Calculate otherUser (i) mean over the common items
+            // Calculate activeUser (a) and otherUser (i) mean over the common items
+            double sumA = 0;
+            double sumI = 0;
+            foreach (double commonItem in commonItems)
+            {
+                sumA += this.User_Items[a][commonItem];
+                sumI += this.User_Items[i][commonItem];
+            }
+            double mean_v_a = sumA / commonItems.Count;
+            double mean_v_i = sumI / commonItems.Count;
 
             // Iterate over all common items
-            // loop
+            double A = 0;
+            double I = 0;
+            double A2 = 0;
+            double I2 = 0;
+            double numerator = 0;
+            double denominator = 0;
+            foreach (double commonItem in commonItems)
+            {
+                // Calculate A = v_aj - mean_v_a
+                A = this.User_Items[a][commonItem] - mean_v_a;
 
-            // Calculate A = v_a - mean_a
-            // Calculate I = v_i - mean_i
-            // Get the product A and I and of these two and add it to a running sum (NUMER)
-            // Get the A^2 and I^2 and add to a running sum (DENOM_A and DENOM_I)
+                // Calculate I = v_ij - mean_v_i
+                I = this.User_Items[i][commonItem] - mean_v_i;
 
-            // endloop
+                // Get the product A and I and of these two and add it to a running sum
+                numerator += A * I;
 
-            double weight = 0.5;
-            // WEIGHT = NUMER / SQRT(DENOM_A * DENOM_I)
+                // Get the product of A^2 and I^2 and add to a running sum (DENOM_A and DENOM_I)
+                A2 += A * A;
+                I2 += I * I;
+            }
+
+            denominator = Math.Sqrt(A2 * I2);
+
+            double weight = numerator / denominator;
+
+            if (Double.IsNaN(weight))
+            {
+                Log.LogVerbose("Weight is NaN for users {0} and {1}. Setting it to 0.", a, i);
+                weight = 0;
+            }
+
+            // Save the weight so we don't have to calculate it again
+            this.SaveWeight(a, i, weight);
 
             // TODO: remove
             if (weight == 0)
@@ -132,38 +195,54 @@ namespace CollaborativeFiltering
             return weight;
         }
 
-        private List<double> GetCommonItems(double userId1, double userId2)
+        private double LookupWeight(double userId1, double userId2)
         {
             // The minUserId is always stored as the first key
             double minUserId = Math.Min(userId1, userId2);
             double maxUserId = Math.Max(userId1, userId2);
 
-            // Check if the list has already been discovered and if not, add it to the data structure
-            if (this.User_Common_Items.ContainsKey(minUserId))
+            // Check if the weight has already been calculated
+            if (this.Correlations.ContainsKey(minUserId))
             {
-                if (this.User_Common_Items[minUserId].ContainsKey(maxUserId))
+                if (this.Correlations[minUserId].ContainsKey(maxUserId))
                 {
-                    // If we get here we already calculated common items for these users
-                    return this.User_Common_Items[minUserId][maxUserId];
-                }
-                else
-                {
-                    // We need to add the common items and return
-                    this.User_Common_Items[minUserId].Add(maxUserId, this.DetermineCommonItems(userId1, userId2));
-                    return this.User_Common_Items[minUserId][maxUserId];
+                    // If we get here we already calculated the weight for these users
+                    Log.LogVerbose("Found stored weight for users {0} and {1}", userId1, userId2);
+                    return this.Correlations[minUserId][maxUserId];
                 }
             }
 
-            // If we get this far, we need to add a new key to the dictionary for the minUserId and then add common items
-            this.User_Common_Items.Add(minUserId, new Dictionary<double, List<double>>());
-            this.User_Common_Items[minUserId].Add(maxUserId, this.DetermineCommonItems(userId1, userId2));
-            return this.User_Common_Items[minUserId][maxUserId];
-
+            return Double.NaN;
         }
 
-        private List<double> DetermineCommonItems(double userId1, double userId2)
+        private void SaveWeight(double userId1, double userId2, double weight)
         {
-            return null;
+            // The minUserId is always stored as the first key
+            double minUserId = Math.Min(userId1, userId2);
+            double maxUserId = Math.Max(userId1, userId2);
+
+            // Check if the user is already in the dictionary
+            if (!this.Correlations.ContainsKey(minUserId))
+            {
+                this.Correlations.TryAdd(minUserId, new ConcurrentDictionary<double, double>());
+            }
+
+            this.Correlations[minUserId].TryAdd(maxUserId, weight);
+        }
+
+        private List<double> GetCommonItems(double userId1, double userId2)
+        {
+            List<double> commonItems = new List<double>();
+
+            if (this.User_Items.ContainsKey(userId1) && this.User_Items.ContainsKey(userId2))
+            {
+                List<double> user1Items = this.User_Items[userId1].Keys.ToList();
+                List<double> user2Items = this.User_Items[userId2].Keys.ToList();
+
+                commonItems = user1Items.Intersect(user2Items).ToList();
+            }
+
+            return commonItems;
         }
 
         public void Initialize(string trainingSetPath, string testingSetPath)
@@ -175,7 +254,7 @@ namespace CollaborativeFiltering
             this.User_AverageRatings = new Dictionary<double, double>();
             this.User_Items = new Dictionary<double, Dictionary<double, double>>();
             this.Item_Users = new Dictionary<double, HashSet<double>>();
-            this.User_Common_Items = new Dictionary<double, Dictionary<double, List<double>>>();
+            this.Correlations = new ConcurrentDictionary<double, ConcurrentDictionary<double, double>>();
 
             Log.LogImportant("Pre-populating user-item and item-user lookup tables");
 
@@ -215,7 +294,7 @@ namespace CollaborativeFiltering
             {
                 double numItems = this.User_Items[userId].Count();
                 double sum = 0;
-                
+
                 foreach (double rating in this.User_Items[userId].Values)
                 {
                     sum += rating;

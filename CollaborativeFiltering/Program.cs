@@ -10,6 +10,10 @@ namespace CollaborativeFiltering
     {
         public static void Main(string[] args)
         {
+            Log.LogAlwaysOn = true;
+            Log.LogImportantOn = true;
+            Log.LogVerboseOn = false;
+
             // Default training and testing files
             string trainingSetPath = @"C:\coding\ml\data\netflix_data\TrainingRatings.txt";
             string testingSetPath = @"C:\coding\ml\data\netflix_data\TestingRatings.txt";
@@ -26,6 +30,7 @@ namespace CollaborativeFiltering
             CF cf = new CF();
             cf.Initialize(trainingSetPath, testingSetPath);
             cf.PredictAll();
+            Console.WriteLine("Finished. Press the anykey to continue.");
             Console.Read();
         }
     }
