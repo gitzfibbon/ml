@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -36,14 +37,16 @@ namespace CollaborativeFiltering
         public void PredictAll()
         {
             //for (int i=0; i < this.TestingData.Count(); i++)
-            for (int i = 0; i < 1000; i++)
+            //for (int i = 0; i < 1000; i++)
+            Parallel.For(0, 1000, i =>
             {
                 double userId = this.TestingData[i][CF.UserIdColumn];
                 double itemId = this.TestingData[i][CF.ItemIdColumn];
                 double actualRating = this.TestingData[i][CF.RatingColumn];
                 double predictedRating = this.PredictVote(userId, itemId);
-                Log.LogImportant("{0}. Predicted {1}, Actual {2} for user {3} item {4}",i, predictedRating, actualRating, userId, itemId);
-            }
+                Log.LogImportant("{0}. Difference {1:0.00} Predicted {2:0.00}, Actual {3:0.00} for user {4} item {5}",
+                    i, Math.Abs(predictedRating - actualRating), predictedRating, actualRating, userId, itemId);
+            });
         }
 
         // Implements 2.1 Eq. 1
@@ -75,7 +78,7 @@ namespace CollaborativeFiltering
                 // get user i's rating for item j
                 v_ij = this.User_Items[i][j];
 
-                
+
                 // get the weight
                 w = this.GetWeight(a, i);
 
@@ -128,7 +131,7 @@ namespace CollaborativeFiltering
             double i = otherUserId;
 
             // Check if we've already calculated the correlation weight for these two users
-            double storedWeight = this.LookupWeight(a,i);
+            double storedWeight = this.LookupWeight(a, i);
             if (!Double.IsNaN(storedWeight))
             {
                 return storedWeight;
