@@ -30,47 +30,47 @@ namespace CollaborativeFiltering
         // We will maintain several data structures to optimize speed over memory.
         public List<float[]> TrainingData; // all of the training data 3-tuples
         public List<float[]> TestingData; // all of the testing data 3-tuples
-        //public Dictionary<float, float> User_AverageRatings; // Hashtable lookup by user for their average rating
-        //public Dictionary<float, Dictionary<float, float>> User_Items; // Hashtable lookup by user all their rated items
-        //public Dictionary<float, HashSet<float>> Item_Users; // Hashtable lookup by item which users rated them
+        public ConcurrentDictionary<int, string> MovieTitles; // all of the testing data 3-tuples
+        private bool MovieTitlesLoaded = false;
         public ConcurrentDictionary<int, float> User_AverageRatings; // Hashtable lookup by user for their average rating
         public ConcurrentDictionary<int, ConcurrentDictionary<int, float>> User_Items; // Hashtable lookup by user all their rated items
         public ConcurrentDictionary<int, HashSet<int>> Item_Users; // Hashtable lookup by item which users rated them
         public ConcurrentDictionary<int, ConcurrentDictionary<int, float>> Correlations; // Stores the correlations between two users
-        private const int MaxSizeOfCorrelations = 1000000;
+        private const int MaxSizeOfCorrelations = 0;
         private int SizeOfCorrelations = 0;
         private int CorrelationReuseCount = 0;
-
 
         public void PredictAll(int? maxPredictions)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-
             float absoluteErrorSum = 0;
             float absoluteErrorSquaredSum = 0;
             int numPredictions = maxPredictions == null ? this.TestingData.Count() : (int)maxPredictions;
             int predictionCount = 0;
-            Log.LogVerbose("predictionCount,i,difference,predicted,actual,user,item,minsElapsed,cachedWeightsCount");
-            //Parallel.For(0, numPredictions, new ParallelOptions { MaxDegreeOfParallelism = 40 }, i =>
+            Log.LogVerbose("predictionCount,difference,predicted,actual,user,item,minsElapsed,title");
+
             Parallel.For(0, numPredictions, i =>
             {
                 int userId = Convert.ToInt32(this.TestingData[i][CF.UserIdColumn]);
                 int itemId = Convert.ToInt32(this.TestingData[i][CF.ItemIdColumn]);
+
                 float actualRating = this.TestingData[i][CF.RatingColumn];
+
                 float predictedRating = this.PredictVote(userId, itemId);
                 float absoluteError = Math.Abs(predictedRating - actualRating);
 
                 absoluteErrorSum += absoluteError;
                 absoluteErrorSquaredSum += absoluteError * absoluteError;
 
-                Log.LogVerbose("{0},{1},{2:0.00},{3:0.00},{4:0.00},{5},{6},{7:0.00},{8}",
-                    predictionCount++, i, absoluteError, predictedRating, actualRating, userId, itemId, stopwatch.Elapsed.TotalMinutes, this.SizeOfCorrelations);
+                Log.LogVerbose("{0},{1:0.00},{2:0.00},{3:0.00},{4},{5},{6:0.00},{7}",
+                    predictionCount++, absoluteError, predictedRating, actualRating, userId, itemId, stopwatch.Elapsed.TotalMinutes,
+                    this.MovieTitlesLoaded == false ? String.Empty : this.MovieTitles[itemId]);
             });
 
             float mae = absoluteErrorSum / numPredictions;
-            double rmse = Math.Sqrt(absoluteErrorSquaredSum / numPredictions);
+            float rmse = Convert.ToSingle(Math.Sqrt(absoluteErrorSquaredSum / numPredictions));
 
             stopwatch.Stop();
             Log.LogImportant("");
@@ -94,9 +94,13 @@ namespace CollaborativeFiltering
             float sum = 0; // summation from the equation
             float k = 0; // normalizing factor
 
+            int count = 0;
+
             // Iterate through each user in the collaborative filtering database
             foreach (int i in this.Item_Users[itemId])  // i is the other users we are iterating through
             {
+                count++;
+
                 // Check if this user already rated this item
                 if (i == a)
                 {
@@ -112,18 +116,13 @@ namespace CollaborativeFiltering
                 v_ij = this.User_Items[i][j];
 
 
-                // get the weight
+                // get the pearson coefficient
                 w = this.GetWeight(a, i);
 
                 // if the weight is 0 don't do any more calculations
                 if (w == 0)
                 {
                     continue;
-                }
-
-                // TODO: remove
-                if (!this.User_AverageRatings.ContainsKey(i))
-                {
                 }
 
                 // get the mean vote of user i
@@ -134,11 +133,6 @@ namespace CollaborativeFiltering
                 sum += w * (v_ij - mean_v_i);
             }
 
-            // TODO: remove
-            if (!this.User_AverageRatings.ContainsKey(a))
-            {
-            }
-
             float mean_v_a = this.User_AverageRatings[a]; // Mean vote for user a
 
             // If k is 0 then just return the active user's mean rating per https://catalyst.uw.edu/gopost/conversation/fsadeghi/961287#3264743
@@ -147,16 +141,11 @@ namespace CollaborativeFiltering
                 return mean_v_a;
             }
 
-            float p_aj = mean_v_a - (sum / k);
-
-            if (float.IsNaN(p_aj))
-            {
-            }
-
+            float p_aj = mean_v_a + (sum / k);
             return p_aj;
         }
 
-        // Implements 2.1 Eq. 2
+        // Implements 2.1 Eq. 2 for the Pearson Coefficient
         private float GetWeight(int activeUserId, int otherUserId)
         {
             // Rename the arguments to match the equations in the paper
@@ -173,7 +162,7 @@ namespace CollaborativeFiltering
             // Get all items common between both users
             List<int> commonItems = this.GetCommonItems(a, i);
 
-            // Calculate activeUser (a) and otherUser (i) mean over the common items
+            //Calculate activeUser (a) and otherUser (i) mean over the common items
             float sumA = 0;
             float sumI = 0;
             foreach (int commonItem in commonItems)
@@ -203,11 +192,12 @@ namespace CollaborativeFiltering
                 numerator += A * I;
 
                 // Get the product of A^2 and I^2 and add to a running sum
-                A2 += A * A;
-                I2 += I * I;
+                A2 += Convert.ToSingle(Math.Pow(A, 2));
+                I2 += Convert.ToSingle(Math.Pow(I, 2)); ;
             }
 
-            denominator = Convert.ToSingle(Math.Sqrt(A2 * I2));
+            denominator = A2 * I2;
+            denominator = Convert.ToSingle(Math.Sqrt(denominator));
 
             float weight = numerator / denominator;
 
@@ -221,14 +211,6 @@ namespace CollaborativeFiltering
             if (this.SizeOfCorrelations < CF.MaxSizeOfCorrelations)
             {
                 this.SaveWeight(a, i, weight);
-            }
-
-            // TODO: remove
-            if (weight == 0)
-            {
-            }
-            else if (weight < 0)
-            {
             }
 
             return weight;
@@ -286,7 +268,7 @@ namespace CollaborativeFiltering
             return commonItems;
         }
 
-        public void Initialize(string trainingSetPath, string testingSetPath)
+        public void Initialize(string trainingSetPath, string testingSetPath, string movieTitlesPath = null)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -353,6 +335,13 @@ namespace CollaborativeFiltering
             Log.LogVerbose("Initializing the testing data");
             this.LoadData(testingSetPath, out this.TestingData);
 
+            if (!String.IsNullOrWhiteSpace(movieTitlesPath))
+            {
+                Log.LogVerbose("Initializing the movie titles");
+                this.LoadMovieTitles(movieTitlesPath);
+                this.MovieTitlesLoaded = true;
+            }
+
             stopwatch.Stop();
             Log.LogVerbose("Finished initializing the testing data. Elapsed time {0} seconds.", stopwatch.Elapsed.TotalSeconds);
 
@@ -379,8 +368,28 @@ namespace CollaborativeFiltering
             }
 
             Log.LogVerbose("Done loading {0} items", data.Count());
-
         }
 
+        private void LoadMovieTitles(string filePath)
+        {
+            Log.LogVerbose("Loading from {0}", filePath);
+
+            int movieIdColumn = 0;
+            int titleColumn = 2;
+
+            // Load the data into an array
+            this.MovieTitles = new ConcurrentDictionary<int, string>();
+            using (StreamReader sr = File.OpenText(filePath))
+            {
+                string s = String.Empty;
+                while ((s = sr.ReadLine()) != null)
+                {
+                    string[] sParts = s.Split(CF.Delimiter);
+                    this.MovieTitles.TryAdd(Convert.ToInt32(sParts[movieIdColumn]), sParts[titleColumn]);
+                }
+            }
+
+            Log.LogVerbose("Done loading {0} items", this.MovieTitles.Count());
+        }
     }
 }
