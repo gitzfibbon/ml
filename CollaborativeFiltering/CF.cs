@@ -82,6 +82,17 @@ namespace CollaborativeFiltering
             Log.LogVerbose("Reused Correlation Calculations: {0}", this.CorrelationReuseCount);
         }
 
+        public void PrintRatedMovies()
+        {
+            Log.LogImportant("count,movieId,movieTitle");
+            foreach (int i in this.Item_Users.Keys)
+            {
+                int count = this.Item_Users[i].Count;
+                string movie = this.MovieTitles[i];
+                Log.LogImportant("{0},{1},{2}", count, i, movie);
+            }
+        }
+
         // Implements 2.1 Eq. 1
         private float PredictVote(int userId, int itemId)
         {
