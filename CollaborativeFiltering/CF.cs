@@ -82,6 +82,59 @@ namespace CollaborativeFiltering
             Log.LogVerbose("Reused Correlation Calculations: {0}", this.CorrelationReuseCount);
         }
 
+        public void RankForUser(int userId, int maxResults = 20)
+        {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            ConcurrentBag<Tuple<int, float>> predictedItems = new ConcurrentBag<Tuple<int, float>>();
+
+            int remaining = this.Item_Users.Keys.Count;
+            Log.LogImportant("Predicting ratings for {0} movies", remaining);
+            Parallel.ForEach(this.Item_Users.Keys, itemId =>
+            {
+                Log.LogImportant("{0}", remaining);
+                remaining--;
+
+                // If the user already rated the item, don't try to predict a rating
+                if (this.User_Items[userId].ContainsKey(itemId))
+                {
+                    return;
+                }
+
+                float predictedRating = this.PredictVote(userId, itemId);
+                predictedItems.Add(new Tuple<int, float>(itemId, predictedRating));
+
+            });
+
+            Log.LogImportant("Items already rated by user {0}:", userId);
+            Log.LogImportant("rating,itemId,title");
+            foreach (int key in this.User_Items[userId].Keys)
+            {
+                Log.LogImportant("{0},{1},{2}",this.User_Items[userId][key],key,this.MovieTitles[key]);
+            }
+
+            Log.LogImportant("");
+            Log.LogImportant("Predicted ratings for user {0}:", userId);
+            Log.LogImportant("rating,itemId,title");
+            int predictionCount = 0;
+            foreach (Tuple<int, float> item in predictedItems.OrderByDescending(x => x.Item2))
+            {
+                Log.LogImportant("{0},{1},{2}", item.Item2, item.Item1, this.MovieTitles[item.Item1]);
+                predictionCount++;
+                if (predictionCount >= maxResults)
+                {
+                    break;
+                }
+            }
+
+            stopwatch.Stop();
+            Log.LogImportant("");
+            Log.LogImportant("Finished predicting ratings for {0}", userId);
+            Log.LogImportant("Number of Predictions: {0}", Math.Min(predictedItems.Count, maxResults));
+            Log.LogImportant("Prediction Time in Minutes: {0:0.00}", stopwatch.Elapsed.TotalMinutes);
+        }
+
         public void PrintRatedMovies()
         {
             Log.LogImportant("count,movieId,movieTitle");

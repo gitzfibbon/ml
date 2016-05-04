@@ -79,6 +79,7 @@ namespace CollaborativeFiltering
                 int rankForUserId = Convert.ToInt32(rankForUser);
                 Log.LogImportant("Ranking ratings for the user {0}", rankForUserId);
                 cf.Initialize(trainingSetPath, testingSetPath, movieTitlesPath);
+                cf.RankForUser(rankForUserId, maxPredictions);
 
             }
             else
