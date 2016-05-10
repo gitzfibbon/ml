@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DecisionTree", "DecisionTre
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CollaborativeFiltering", "CollaborativeFiltering\CollaborativeFiltering.csproj", "{35636B3A-6783-440B-935E-864E61E0F227}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NaiveBayes", "NaiveBayes\NaiveBayes.csproj", "{764503E2-FC0E-4C49-B7DE-14130491DC21}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{35636B3A-6783-440B-935E-864E61E0F227}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{35636B3A-6783-440B-935E-864E61E0F227}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{35636B3A-6783-440B-935E-864E61E0F227}.Release|Any CPU.Build.0 = Release|Any CPU
+		{764503E2-FC0E-4C49-B7DE-14130491DC21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{764503E2-FC0E-4C49-B7DE-14130491DC21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{764503E2-FC0E-4C49-B7DE-14130491DC21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{764503E2-FC0E-4C49-B7DE-14130491DC21}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
