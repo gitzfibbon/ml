@@ -43,7 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="NB.cs" />
-    <Compile Include="SpamRecord.cs" />
+    <Compile Include="Vocabulary.cs" />
+    <Compile Include="Target.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

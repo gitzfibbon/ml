@@ -12,6 +12,8 @@ namespace NaiveBayes
     {
         static void Main(string[] args)
         {
+            Trace.Listeners.Add(new ConsoleTraceListener());
+
             Trace.TraceInformation("");
 
             string trainingSetPath = ConfigurationManager.AppSettings["TrainingSetPath"];
@@ -30,10 +32,7 @@ namespace NaiveBayes
             }
 
             NB nb = new NB();
-
-            //cf.Initialize(trainingSetPath, testingSetPath, movieTitlesPath);
-            //cf.PredictAll(maxPredictions <= 0 ? null : (int?)maxPredictions);
-
+            nb.Train(trainingSetPath);
 
             Trace.TraceInformation("");
 

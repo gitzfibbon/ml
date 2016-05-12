@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace NaiveBayes
 {
-    public class SpamRecord
+    public class Vocabulary
     {
-        public string EmailId { get; set; }
-
-        public bool IsSpam { get; set; }
-
+        public Vocabulary()
+        {
+            this.Words = new Dictionary<string, int>();
+        }
         public Dictionary<string, int> Words { get; set; }
     }
 }
