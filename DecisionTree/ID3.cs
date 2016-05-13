@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 using weka.core;
-using MathNet.Numerics;
 
 namespace DecisionTree
 {

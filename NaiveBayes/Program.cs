@@ -33,6 +33,7 @@ namespace NaiveBayes
 
             NB nb = new NB();
             nb.Train(trainingSetPath);
+            nb.Test(testingSetPath);
 
             Trace.TraceInformation("");
 
