@@ -46,7 +46,7 @@ namespace NaiveBayes
                     double logLikelihood = Math.Log((n_k + 1) / (double)(n + this.Vocabulary.Words.Keys.Count));
                     //Trace.TraceInformation("{0},{1}", likelihood, logLikelihood);
 
-                    this.Likelihoods[targetValue].Add(word, logLikelihood);
+                    this.Likelihoods[targetValue].Add(word, likelihood);
                 }
             }
 
@@ -58,23 +58,56 @@ namespace NaiveBayes
         {
             this.LoadTestingData(testingSetPath);
 
+            int trueSpam = 0;
+            int falseSpam = 0;
+            int trueHam = 0;
+            int falseHam = 0;
+
+            Trace.TraceInformation("IsCorrect,Predicted,Actual,Probability,Id");
             foreach (Document document in this.Documents.Values)
             {
-                this.Classify(document);
+                string result = this.Classify(document);
+
+                if (result.Equals("spam", StringComparison.InvariantCultureIgnoreCase) && document.Value.Equals("spam", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    trueSpam++;
+                }
+                else if (result.Equals("spam", StringComparison.InvariantCultureIgnoreCase) && document.Value.Equals("ham", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    falseSpam++;
+                }
+                else if (result.Equals("ham", StringComparison.InvariantCultureIgnoreCase) && document.Value.Equals("ham", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    trueHam++;
+                }
+                else if (result.Equals("ham", StringComparison.InvariantCultureIgnoreCase) && document.Value.Equals("spam", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    falseHam++;
+                }
             }
+
+            Trace.TraceInformation("");
+            Trace.TraceInformation("trueSpam: {0}", trueSpam);
+            Trace.TraceInformation("falseSpam: {0}", falseSpam);
+            Trace.TraceInformation("trueHam: {0}", trueHam);
+            Trace.TraceInformation("falseHam: {0}", falseHam);
+            Trace.TraceInformation("Accuracy predicting spam: {0:0.000}", (trueSpam + trueHam) / (double)(trueSpam + falseSpam + trueHam + falseHam));
+            Trace.TraceInformation("Precision predicting spam: {0:0.000}", (trueSpam) / (double)(trueSpam + falseSpam));
+            Trace.TraceInformation("Recall predicting spam: {0:0.000}", (trueSpam) / (double)(trueSpam + falseHam));
+
         }
 
         private string Classify(Document document)
         {
             // This method is the implementation of Classify_Naive_Bayes_Text from Mitchell Table 6.2
 
-            double argmax = 0;
+            double argmax = Double.MinValue;
             string estimatedTargetValue = String.Empty;
 
             foreach (string targetValue in this.Targets.Keys)
             {
                 // This will be the cumulative product of the likelihoods for the given target value
-                double cumulativeProduct = 1;
+                double cumulativeSumOfLogLikelihood = 1;
                 bool atLeastOneMatch = false;
 
                 foreach (string word in document.Words.Keys)
@@ -86,7 +119,7 @@ namespace NaiveBayes
 
                     // Get the likelihood which was already calculated
                     double likelihood = this.Likelihoods[targetValue][word];
-                    cumulativeProduct *= likelihood;
+                    cumulativeSumOfLogLikelihood += Math.Log(likelihood);
                     atLeastOneMatch = true;
                 }
 
@@ -96,11 +129,11 @@ namespace NaiveBayes
                     return String.Empty;
                 }
 
-                double tempArgMax = this.Targets[targetValue].PriorProbability * cumulativeProduct;
+                double tempArgMax =  Math.Log(this.Targets[targetValue].PriorProbability) + cumulativeSumOfLogLikelihood;
 
                 //Trace.TraceInformation("Item: {0}, TargetValue: {1}, Probability: {2}", document.Id, targetValue, tempArgMax);
 
-                if (tempArgMax > argmax)
+                if (tempArgMax >= argmax)
                 {
                     argmax = tempArgMax;
                     estimatedTargetValue = targetValue;
@@ -110,7 +143,8 @@ namespace NaiveBayes
 
             }
 
-            Trace.TraceInformation("{0} is max with probability {1}", estimatedTargetValue, argmax);
+            Trace.TraceInformation("{0},{1},{2},{3},{4}",
+                estimatedTargetValue.Equals(document.Value, StringComparison.InvariantCultureIgnoreCase), estimatedTargetValue, document.Value, argmax, document.Id);
             return estimatedTargetValue;
         }
 

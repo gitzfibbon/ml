@@ -8,6 +8,7 @@ data/
 *.suo
 *.user
 *.sln.docstates
+out.txt
 
 # Build results
 [Dd]ebug/
