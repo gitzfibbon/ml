@@ -19,10 +19,13 @@ namespace NaiveBayes
         private Dictionary<string, Dictionary<string, double>> Likelihoods;
         private Dictionary<string, Document> Documents;
 
-        public void Train(string trainingSetPath)
+        private double LaplaceSmoothing = 1.0;
+
+        public void Train(string trainingSetPath, double laplaceSmooting = 1.0)
         {
             this.LoadTrainingData(trainingSetPath);
             this.Likelihoods = new Dictionary<string, Dictionary<string, double>>();
+            this.LaplaceSmoothing = laplaceSmooting;
 
             // This is the main part of the Learn_Naive_Bayes_Test (#2) from Mitchell Table 6.2
             foreach (string targetValue in this.Targets.Keys)
@@ -42,10 +45,7 @@ namespace NaiveBayes
                     int n_k = this.Targets[targetValue].Words.ContainsKey(word) ? this.Targets[targetValue].Words[word] : 0;
 
                     // calculate likelihood
-                    double likelihood = (n_k + 1) / (double)(n + this.Vocabulary.Words.Keys.Count);
-                    double logLikelihood = Math.Log((n_k + 1) / (double)(n + this.Vocabulary.Words.Keys.Count));
-                    //Trace.TraceInformation("{0},{1}", likelihood, logLikelihood);
-
+                    double likelihood = (n_k + laplaceSmooting) / (double)(n + (laplaceSmooting * this.Vocabulary.Words.Keys.Count));
                     this.Likelihoods[targetValue].Add(word, likelihood);
                 }
             }
@@ -91,6 +91,7 @@ namespace NaiveBayes
             Trace.TraceInformation("falseSpam: {0}", falseSpam);
             Trace.TraceInformation("trueHam: {0}", trueHam);
             Trace.TraceInformation("falseHam: {0}", falseHam);
+            Trace.TraceInformation("Laplace Smoothing Parameter: {0}", this.LaplaceSmoothing);
             Trace.TraceInformation("Accuracy predicting spam: {0:0.000}", (trueSpam + trueHam) / (double)(trueSpam + falseSpam + trueHam + falseHam));
             Trace.TraceInformation("Precision predicting spam: {0:0.000}", (trueSpam) / (double)(trueSpam + falseSpam));
             Trace.TraceInformation("Recall predicting spam: {0:0.000}", (trueSpam) / (double)(trueSpam + falseHam));

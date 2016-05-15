@@ -18,7 +18,8 @@ namespace NaiveBayes
 
             string trainingSetPath = ConfigurationManager.AppSettings["TrainingSetPath"];
             string testingSetPath = ConfigurationManager.AppSettings["TestingSetPath"];
-
+            string laplaceSmoothing = ConfigurationManager.AppSettings["LaplaceSmoothing"];
+            
             if (String.IsNullOrWhiteSpace(trainingSetPath))
             {
                 trainingSetPath = "TrainingRatings.txt";
@@ -31,8 +32,15 @@ namespace NaiveBayes
                 Trace.TraceInformation("TestingSetPath in config file is not set. Default to {0} in current directory.", testingSetPath);
             }
 
+            if (String.IsNullOrWhiteSpace(laplaceSmoothing))
+            {
+                laplaceSmoothing = "1.0";
+                Trace.TraceInformation("LaplaceSmoothing in config file is not set. Default to {0}.", laplaceSmoothing);
+            }
+
+
             NB nb = new NB();
-            nb.Train(trainingSetPath);
+            nb.Train(trainingSetPath, Double.Parse(laplaceSmoothing));
             nb.Test(testingSetPath);
 
             Trace.TraceInformation("");
