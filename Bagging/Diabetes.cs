@@ -46,7 +46,9 @@ namespace Bagging
                     string[] parts = s.Split(Diabetes.Delimiter);
 
                     Diabetes.ValueForNumberOfTimesPregnant(instance, 0, parts[0]);
-                    //instance.setValue(0, Diabetes.ValueForNumberOfTimesPregnant(parts[0]));
+                    Diabetes.ValueForPlasmaGlucoseConcentrationt(instance, 1, parts[1]);
+                    Diabetes.ValueForDiastolicBloodPressure(instance, 2, parts[2]);
+                    Diabetes.ValueForTricepsSkinFoldThickness(instance, 3, parts[3]);
 
                     instances.add(instance);
 
@@ -69,33 +71,33 @@ namespace Bagging
             attributes.addElement(new weka.core.Attribute("numberOfTimesPregnant", numberOfTimesPregnant));
 
             FastVector plasmaGlucoseConcentration = new FastVector();
-            plasmaGlucoseConcentration.addElement("normal");
-            plasmaGlucoseConcentration.addElement("high");
+            plasmaGlucoseConcentration.addElement("normal"); // < 140
+            plasmaGlucoseConcentration.addElement("high"); // >= 140
             attributes.addElement(new weka.core.Attribute("plasmaGlucoseConcentration", plasmaGlucoseConcentration));
 
             FastVector diastolicBloodPressure = new FastVector();
-            diastolicBloodPressure.addElement("low");
-            diastolicBloodPressure.addElement("normal");
-            diastolicBloodPressure.addElement("pre-high");
-            diastolicBloodPressure.addElement("high");
+            diastolicBloodPressure.addElement("low"); // < 60
+            diastolicBloodPressure.addElement("normal"); // 60 to 79
+            diastolicBloodPressure.addElement("pre-high"); // 80 to 89
+            diastolicBloodPressure.addElement("high"); // 90+
             attributes.addElement(new weka.core.Attribute("diastolicBloodPressure", diastolicBloodPressure));
 
             FastVector tricepsSkinFoldThickness = new FastVector();
-            tricepsSkinFoldThickness.addElement("low");
-            tricepsSkinFoldThickness.addElement("normal");
-            tricepsSkinFoldThickness.addElement("high");
+            tricepsSkinFoldThickness.addElement("low"); // < 4.5
+            tricepsSkinFoldThickness.addElement("normal"); // 4.5 to 36.5
+            tricepsSkinFoldThickness.addElement("high"); // > 36.5
             attributes.addElement(new weka.core.Attribute("tricepsSkinFoldThickness", tricepsSkinFoldThickness));
 
             FastVector twoHourSerumInsulin = new FastVector();
-            twoHourSerumInsulin.addElement("normal");
-            twoHourSerumInsulin.addElement("high");
+            twoHourSerumInsulin.addElement("normal"); // < 166
+            twoHourSerumInsulin.addElement("high"); // >= 166
             attributes.addElement(new weka.core.Attribute("twoHourSerumInsulin", twoHourSerumInsulin));
 
             FastVector bmi = new FastVector();
-            bmi.addElement("underweight");
-            bmi.addElement("normal");
-            bmi.addElement("overweight");
-            bmi.addElement("obese");
+            bmi.addElement("underweight"); // < 18.5
+            bmi.addElement("normal"); // 18.5 to 24.9
+            bmi.addElement("overweight"); // 25 to 29.9
+            bmi.addElement("obese"); // 30+
             attributes.addElement(new weka.core.Attribute("bmi", bmi));
 
             FastVector diabetesPedigreeFunction = new FastVector();
@@ -121,42 +123,87 @@ namespace Bagging
 
         private static void ValueForNumberOfTimesPregnant(Instance instance, int attributeIndex, string inputValue)
         {
-            int numberOfTimesPregnant = Int32.Parse(inputValue);
+            int value = Int32.Parse(inputValue);
 
-            if (numberOfTimesPregnant <= 0)
+            if (value <= 0)
             {
                 instance.setValue(attributeIndex, "zero");
             }
-            else if (numberOfTimesPregnant <= 4)
+            else if (value <= 4)
             {
                 instance.setValue(attributeIndex, "low");
             }
-            else if (numberOfTimesPregnant <= 9)
+            else if (value <= 9)
             {
                 instance.setValue(attributeIndex, "medium");
             }
-            else if (numberOfTimesPregnant >= 10)
+            else if (value >= 10)
             {
                 instance.setValue(attributeIndex, "high");
             }
-            else
+        }
+
+        private static void ValueForPlasmaGlucoseConcentrationt(Instance instance, int attributeIndex, string inputValue)
+        {
+            int value = Int32.Parse(inputValue);
+
+            if (value <= 0)
             {
                 return;
             }
-        }
-
-        private static string GetValueFor(string inputValue)
-        {
-            switch (inputValue)
+            else if (value < 140)
             {
-                case "aaa":
-                    return "bbb";
-                case "ccc":
-                    return "ddd";
-                default:
-                    return null;
+                instance.setValue(attributeIndex, "normal");
+            }
+            else if (value >= 140)
+            {
+                instance.setValue(attributeIndex, "high");
             }
         }
 
+        private static void ValueForDiastolicBloodPressure(Instance instance, int attributeIndex, string inputValue)
+        {
+            int value = Int32.Parse(inputValue);
+
+            if (value <= 0)
+            {
+                return;
+            }
+            else if (value < 60)
+            {
+                instance.setValue(attributeIndex, "low");
+            }
+            else if (value < 80)
+            {
+                instance.setValue(attributeIndex, "normal");
+            }
+            else if (value < 90)
+            {
+                instance.setValue(attributeIndex, "pre-high");
+            }
+            else if (value >= 90)
+            {
+                instance.setValue(attributeIndex, "high");
+            }
+        }
+
+
+        private static void ValueForTricepsSkinFoldThickness(Instance instance, int attributeIndex, string inputValue)
+        {
+            int value = Int32.Parse(inputValue);
+
+            if (value <= 0)
+            {
+                return;
+            }
+            else if (value < 36.5)
+            {
+                instance.setValue(attributeIndex, "normal");
+            }
+            else if (value >= 36.5)
+            {
+                instance.setValue(attributeIndex, "high");
+            }
+        }
     }
 }
