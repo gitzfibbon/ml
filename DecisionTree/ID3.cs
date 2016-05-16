@@ -14,14 +14,17 @@ namespace DecisionTree
         public static int PositiveTargetValue = 0;
         public static int NegativeTargetValue = 1;
 
-
-        //private int TargetAttributeIndex;
-        private ID3Node RootNode;
+        public ID3Node RootNode { get; set; }
 
         public void Test(string arffFilePath, ID3Node root)
         {
             // Load the examples into S
             Instances S = new weka.core.Instances(new java.io.FileReader(arffFilePath));
+            this.Test(S, root);
+        }
+
+        public void Test(Instances S, ID3Node root)
+        {
             int targetAttributeIndex = S.numAttributes() - 1;
 
             // Evaluate each example
@@ -107,7 +110,7 @@ namespace DecisionTree
 
         }
 
-        private int Predict(ID3Node node, Instance example)
+        public int Predict(ID3Node node, Instance example)
         {
             // If the node is a leaf, return the value
             if (node.IsLeaf)
@@ -142,6 +145,11 @@ namespace DecisionTree
         {
             // Load the examples into S
             Instances S = new weka.core.Instances(new java.io.FileReader(arffFilePath));
+            return this.Train(S, confidenceLevel);
+        }
+
+        public ID3Node Train(Instances S, double confidenceLevel)
+        {
             int targetAttributeIndex = S.numAttributes() - 1;
 
             // Store the attribute indexes in a list. They will get removed as we split on attributes.

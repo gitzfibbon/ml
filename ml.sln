@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CollaborativeFiltering", "C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NaiveBayes", "NaiveBayes\NaiveBayes.csproj", "{764503E2-FC0E-4C49-B7DE-14130491DC21}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bagging", "Bagging\Bagging.csproj", "{8F2154D1-74F0-4F28-A38F-422D7C8F92B1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{764503E2-FC0E-4C49-B7DE-14130491DC21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{764503E2-FC0E-4C49-B7DE-14130491DC21}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{764503E2-FC0E-4C49-B7DE-14130491DC21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F2154D1-74F0-4F28-A38F-422D7C8F92B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F2154D1-74F0-4F28-A38F-422D7C8F92B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F2154D1-74F0-4F28-A38F-422D7C8F92B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F2154D1-74F0-4F28-A38F-422D7C8F92B1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
