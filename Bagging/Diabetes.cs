@@ -49,6 +49,11 @@ namespace Bagging
                     Diabetes.ValueForPlasmaGlucoseConcentrationt(instance, 1, parts[1]);
                     Diabetes.ValueForDiastolicBloodPressure(instance, 2, parts[2]);
                     Diabetes.ValueForTricepsSkinFoldThickness(instance, 3, parts[3]);
+                    Diabetes.ValueForTwoHourSerumInsulin(instance, 4, parts[4]);
+                    Diabetes.ValueForBmi(instance, 5, parts[5]);
+                    Diabetes.ValueForDiabetesPedigreeFunction(instance, 6, parts[6]);
+                    Diabetes.ValueForAge(instance, 7, parts[7]);
+                    Diabetes.ValueForDiabetes(instance, 8, parts[8]);
 
                     instances.add(instance);
 
@@ -95,8 +100,8 @@ namespace Bagging
 
             FastVector bmi = new FastVector();
             bmi.addElement("underweight"); // < 18.5
-            bmi.addElement("normal"); // 18.5 to 24.9
-            bmi.addElement("overweight"); // 25 to 29.9
+            bmi.addElement("normal"); // 18.5 to 25
+            bmi.addElement("overweight"); // 25 to 30
             bmi.addElement("obese"); // 30+
             attributes.addElement(new weka.core.Attribute("bmi", bmi));
 
@@ -187,7 +192,6 @@ namespace Bagging
             }
         }
 
-
         private static void ValueForTricepsSkinFoldThickness(Instance instance, int attributeIndex, string inputValue)
         {
             int value = Int32.Parse(inputValue);
@@ -205,5 +209,112 @@ namespace Bagging
                 instance.setValue(attributeIndex, "high");
             }
         }
+
+        private static void ValueForTwoHourSerumInsulin(Instance instance, int attributeIndex, string inputValue)
+        {
+            int value = Int32.Parse(inputValue);
+
+            if (value <= 0)
+            {
+                return;
+            }
+            else if (value < 166)
+            {
+                instance.setValue(attributeIndex, "normal");
+            }
+            else if (value >= 166)
+            {
+                instance.setValue(attributeIndex, "high");
+            }
+        }
+
+        private static void ValueForBmi(Instance instance, int attributeIndex, string inputValue)
+        {
+            double value = Double.Parse(inputValue);
+
+            if (value <= 0)
+            {
+                return;
+            }
+            else if (value < 18.5)
+            {
+                instance.setValue(attributeIndex, "underweight");
+            }
+            else if (value < 25)
+            {
+                instance.setValue(attributeIndex, "normal");
+            }
+            else if (value < 30)
+            {
+                instance.setValue(attributeIndex, "overweight");
+            }
+            else if (value >= 30)
+            {
+                instance.setValue(attributeIndex, "obese");
+            }
+        }
+
+        private static void ValueForDiabetesPedigreeFunction(Instance instance, int attributeIndex, string inputValue)
+        {
+            double value = Double.Parse(inputValue);
+
+            if (value <= 0)
+            {
+                return;
+            }
+            else if (value < 0.2)
+            {
+                instance.setValue(attributeIndex, "low");
+            }
+            else if (value < 0.7)
+            {
+                instance.setValue(attributeIndex, "normal");
+            }
+            else if (value >= 0.7)
+            {
+                instance.setValue(attributeIndex, "high");
+            }
+        }
+
+        private static void ValueForAge(Instance instance, int attributeIndex, string inputValue)
+        {
+            int value = Int32.Parse(inputValue);
+
+            if (value <= 0)
+            {
+                return;
+            }
+            else if (value < 30)
+            {
+                instance.setValue(attributeIndex, "young");
+            }
+            else if (value < 50)
+            {
+                instance.setValue(attributeIndex, "middle");
+            }
+            else if (value >= 50)
+            {
+                instance.setValue(attributeIndex, "old");
+            }
+        }
+
+        private static void ValueForDiabetes(Instance instance, int attributeIndex, string inputValue)
+        {
+            int value = Int32.Parse(inputValue);
+
+            if (value == 0)
+            {
+                instance.setValue(attributeIndex, "no");
+            }
+            else if (value == 1)
+            {
+                instance.setValue(attributeIndex, "yes");
+            }
+            else
+            {
+                return;
+            }
+        }
+
     }
 }
