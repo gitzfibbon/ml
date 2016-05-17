@@ -20,7 +20,7 @@ namespace Bagging
         private const char Delimiter = ',';
         private const int NumAttributes = 9;
 
-        public static void Run(string trainingSetPath, string testingSetPath, int numberOfModels)
+        public static void Run(string trainingSetPath, string testingSetPath, int numberOfModels, int? randomSeed)
         {
             Trace.TraceInformation("Starting bagging");
             Trace.TraceInformation("TrainingSetPath: {0}", trainingSetPath);
@@ -29,7 +29,7 @@ namespace Bagging
 
             Instances trainingInstances = Diabetes.LoadData(trainingSetPath);
             Bagging bagging = new Bagging();
-            bagging.Train(trainingInstances, numberOfModels);
+            bagging.Train(trainingInstances, numberOfModels, randomSeed);
             Instances testingInstances = Diabetes.LoadData(testingSetPath);
             bagging.TestNonBagging(testingInstances);
             bagging.Test(testingInstances);

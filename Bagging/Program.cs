@@ -16,29 +16,41 @@ namespace Bagging
 
             Trace.TraceInformation("");
 
-            string trainingSetPath = ConfigurationManager.AppSettings["TrainingSetPath"];
-            string testingSetPath = ConfigurationManager.AppSettings["TestingSetPath"];
-            string numberOfModels = ConfigurationManager.AppSettings["NumberOfModels"];
-            
-            if (String.IsNullOrWhiteSpace(trainingSetPath))
+            string trainingSetPathConfig = ConfigurationManager.AppSettings["TrainingSetPath"];
+            string testingSetPathConfig = ConfigurationManager.AppSettings["TestingSetPath"];
+            string numberOfModelsConfig = ConfigurationManager.AppSettings["NumberOfModels"];
+            string randomSeedConfig = ConfigurationManager.AppSettings["RandomSeed"];
+            int? randomSeed = null;
+
+            if (String.IsNullOrWhiteSpace(trainingSetPathConfig))
             {
-                trainingSetPath = "TrainingRatings.txt";
-                Trace.TraceInformation("TrainingSetPath in config file is not set. Default to {0} in current directory.", trainingSetPath);
+                trainingSetPathConfig = "TrainingRatings.txt";
+                Trace.TraceInformation("TrainingSetPath in config file is not set. Default to {0} in current directory.", trainingSetPathConfig);
             }
 
-            if (String.IsNullOrWhiteSpace(testingSetPath))
+            if (String.IsNullOrWhiteSpace(testingSetPathConfig))
             {
-                testingSetPath = "TestingRatings.txt";
-                Trace.TraceInformation("TestingSetPath in config file is not set. Default to {0} in current directory.", testingSetPath);
+                testingSetPathConfig = "TestingRatings.txt";
+                Trace.TraceInformation("TestingSetPath in config file is not set. Default to {0} in current directory.", testingSetPathConfig);
             }
 
-            if (String.IsNullOrWhiteSpace(numberOfModels))
+            if (String.IsNullOrWhiteSpace(numberOfModelsConfig))
             {
-                numberOfModels = "1";
-                Trace.TraceInformation("NumberOfModels in config file is not set. Default to {0}.", numberOfModels);
+                numberOfModelsConfig = "1";
+                Trace.TraceInformation("NumberOfModels in config file is not set. Default to {0}.", numberOfModelsConfig);
             }
 
-            Diabetes.Run(trainingSetPath, testingSetPath, Int32.Parse(numberOfModels));
+            if (String.IsNullOrWhiteSpace(randomSeedConfig))
+            {
+                randomSeed = null;
+                Trace.TraceInformation("RandomSeed in config file is not set. Default to null.");
+            }
+            else
+            {
+                randomSeed = Int32.Parse(randomSeedConfig);
+            }
+
+            Diabetes.Run(trainingSetPathConfig, testingSetPathConfig, Int32.Parse(numberOfModelsConfig), randomSeed);
 
             Trace.TraceInformation("");
 

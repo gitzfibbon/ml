@@ -26,7 +26,7 @@ namespace Bagging
             DecisionTree.Log.VerboseOn = false;
         }
 
-        public void Train(Instances instances, int numberOfModels)
+        public void Train(Instances instances, int numberOfModels, int? randomSeed = null)
         {
             // First train and test without bagging
             this.NonBaggingModel = new ID3();
@@ -35,7 +35,7 @@ namespace Bagging
             this.Models = new List<ID3>();
 
             // Do sampling with replacement and then train the model
-            Random random = new Random();
+            Random random = randomSeed == null ? new Random() : new Random((int)randomSeed);
             for (int i = 0; i < numberOfModels; i++)
             {
                 Instances newInstances = new Instances(instances, 0);
