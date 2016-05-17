@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using DecisionTree;
 using weka.core;
 
 namespace Bagging
@@ -29,8 +30,8 @@ namespace Bagging
             Instances trainingInstances = Diabetes.LoadData(trainingSetPath);
             Bagging bagging = new Bagging();
             bagging.Train(trainingInstances, numberOfModels);
-
             Instances testingInstances = Diabetes.LoadData(testingSetPath);
+            bagging.TestNonBagging(testingInstances);
             bagging.Test(testingInstances);
         }
 
