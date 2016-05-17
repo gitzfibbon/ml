@@ -26,7 +26,12 @@ namespace Bagging
             Trace.TraceInformation("TestingSetPath: {0}", testingSetPath);
             Trace.TraceInformation("Models: {0}", numberOfModels);
 
-            Instances instances = Diabetes.LoadData(trainingSetPath);
+            Instances trainingInstances = Diabetes.LoadData(trainingSetPath);
+            Bagging bagging = new Bagging();
+            bagging.Train(trainingInstances, numberOfModels);
+
+            Instances testingInstances = Diabetes.LoadData(testingSetPath);
+            bagging.Test(testingInstances);
         }
 
         private static Instances LoadData(string filePath)
@@ -118,9 +123,9 @@ namespace Bagging
             attributes.addElement(new weka.core.Attribute("age", age));
 
             FastVector diabetes = new FastVector();
-            diabetes.addElement("no");
-            diabetes.addElement("yes");
-            attributes.addElement(new weka.core.Attribute("diabetes", diabetes));
+            diabetes.addElement("0"); // negative
+            diabetes.addElement("1"); // positive
+            attributes.addElement(new weka.core.Attribute("diagnosis", diabetes));
 
             Instances instances = new Instances("diabetes", attributes, 0);
             return instances;
@@ -304,11 +309,11 @@ namespace Bagging
 
             if (value == 0)
             {
-                instance.setValue(attributeIndex, "no");
+                instance.setValue(attributeIndex, "0");
             }
             else if (value == 1)
             {
-                instance.setValue(attributeIndex, "yes");
+                instance.setValue(attributeIndex, "1");
             }
             else
             {

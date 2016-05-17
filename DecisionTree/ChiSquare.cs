@@ -15,7 +15,7 @@ namespace DecisionTree
         /// </summary>
         public static bool ChiSquaredTest(double confidenceInterval, Instances S, int attributeIndex, int targetAttributeIndex)
         {
-            attributeIndex = 89;
+            //attributeIndex = 89;
 
             double threshold = 1 - confidenceInterval;
 
