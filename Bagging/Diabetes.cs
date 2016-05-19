@@ -14,7 +14,7 @@ namespace Bagging
     public enum Category
     {
         CommonRanges = 0,
-        Quartiles = 1
+        Buckets = 1
     }
 
     /// <summary>
@@ -25,6 +25,7 @@ namespace Bagging
     {
         private const char Delimiter = ',';
         private const int NumAttributes = 9;
+        private const int NumBuckets = 4;
 
         public static void Run(string trainingSetPath, string testingSetPath, int numberOfModels, int? randomSeed)
         {
@@ -41,7 +42,7 @@ namespace Bagging
             bagging.Test(testingInstances);
         }
 
-        private static Instances LoadData(string filePath, Category category = Category.Quartiles)
+        private static Instances LoadData(string filePath, Category category = Category.Buckets)
         {
             Trace.TraceInformation("Loading data from {0}", filePath);
 
@@ -65,16 +66,16 @@ namespace Bagging
 
             // Set the attribute values, add to the Instances object
             Instances instances;
-            if (category == Category.Quartiles)
+            if (category == Category.Buckets)
             {
-                instances = Diabetes.DefineQuartileAttributes();
+                instances = Diabetes.DefineBucketAttributes(Diabetes.NumBuckets);
 
                 // Calculate the bucket boundaries for each attribute except the target attribute
                 List<double[]> allBucketBoundaries = new List<double[]>();
                 for (int i = 0; i < Diabetes.NumAttributes - 1; i++)
                 {
                     double[] attributeData = data.Select(x => x[i]).ToArray();
-                    double[] bucketBoundaries = Diabetes.BucketBoundaries(4, attributeData);
+                    double[] bucketBoundaries = Diabetes.BucketBoundaries(Diabetes.NumBuckets, attributeData);
                     allBucketBoundaries.Add(bucketBoundaries);
                 }
 
@@ -141,64 +142,40 @@ namespace Bagging
             return instances;
         }
 
-        private static Instances DefineQuartileAttributes()
+        private static Instances DefineBucketAttributes(int numBuckets)
         {
             FastVector attributes = new FastVector();
 
             FastVector numberOfTimesPregnant = new FastVector();
-            numberOfTimesPregnant.addElement("0"); 
-            numberOfTimesPregnant.addElement("1");
-            numberOfTimesPregnant.addElement("2");
-            numberOfTimesPregnant.addElement("3");
-            attributes.addElement(new weka.core.Attribute("numberOfTimesPregnant", numberOfTimesPregnant));
-
             FastVector plasmaGlucoseConcentration = new FastVector();
-            plasmaGlucoseConcentration.addElement("0"); 
-            plasmaGlucoseConcentration.addElement("1");
-            plasmaGlucoseConcentration.addElement("2");
-            plasmaGlucoseConcentration.addElement("3");
-            attributes.addElement(new weka.core.Attribute("plasmaGlucoseConcentration", plasmaGlucoseConcentration));
-
             FastVector diastolicBloodPressure = new FastVector();
-            diastolicBloodPressure.addElement("0"); 
-            diastolicBloodPressure.addElement("1");
-            diastolicBloodPressure.addElement("2");
-            diastolicBloodPressure.addElement("3");
-            attributes.addElement(new weka.core.Attribute("diastolicBloodPressure", diastolicBloodPressure));
-
             FastVector tricepsSkinFoldThickness = new FastVector();
-            tricepsSkinFoldThickness.addElement("0"); 
-            tricepsSkinFoldThickness.addElement("1");
-            tricepsSkinFoldThickness.addElement("2");
-            tricepsSkinFoldThickness.addElement("3");
-            attributes.addElement(new weka.core.Attribute("tricepsSkinFoldThickness", tricepsSkinFoldThickness));
-
             FastVector twoHourSerumInsulin = new FastVector();
-            twoHourSerumInsulin.addElement("0"); 
-            twoHourSerumInsulin.addElement("1");
-            twoHourSerumInsulin.addElement("2");
-            twoHourSerumInsulin.addElement("3");
-            attributes.addElement(new weka.core.Attribute("twoHourSerumInsulin", twoHourSerumInsulin));
-
             FastVector bmi = new FastVector();
-            bmi.addElement("0"); 
-            bmi.addElement("1");
-            bmi.addElement("2");
-            bmi.addElement("3");
-            attributes.addElement(new weka.core.Attribute("bmi", bmi));
-
             FastVector diabetesPedigreeFunction = new FastVector();
-            diabetesPedigreeFunction.addElement("0"); 
-            diabetesPedigreeFunction.addElement("1");
-            diabetesPedigreeFunction.addElement("2");
-            diabetesPedigreeFunction.addElement("3");
-            attributes.addElement(new weka.core.Attribute("diabetesPedigreeFunction", diabetesPedigreeFunction));
-
             FastVector age = new FastVector();
-            age.addElement("0"); 
-            age.addElement("1");
-            age.addElement("2");
-            age.addElement("3");
+
+            for (int i = 0; i < numBuckets; i++)
+            {
+                string attributeValueName = i.ToString();
+
+                numberOfTimesPregnant.addElement(attributeValueName);
+                plasmaGlucoseConcentration.addElement(attributeValueName);
+                diastolicBloodPressure.addElement(attributeValueName);
+                tricepsSkinFoldThickness.addElement(attributeValueName);
+                twoHourSerumInsulin.addElement(attributeValueName);
+                bmi.addElement(attributeValueName);
+                diabetesPedigreeFunction.addElement(attributeValueName);
+                age.addElement(attributeValueName);
+            }
+            
+            attributes.addElement(new weka.core.Attribute("numberOfTimesPregnant", numberOfTimesPregnant));
+            attributes.addElement(new weka.core.Attribute("plasmaGlucoseConcentration", plasmaGlucoseConcentration));
+            attributes.addElement(new weka.core.Attribute("diastolicBloodPressure", diastolicBloodPressure));
+            attributes.addElement(new weka.core.Attribute("tricepsSkinFoldThickness", tricepsSkinFoldThickness));
+            attributes.addElement(new weka.core.Attribute("twoHourSerumInsulin", twoHourSerumInsulin));
+            attributes.addElement(new weka.core.Attribute("bmi", bmi));
+            attributes.addElement(new weka.core.Attribute("diabetesPedigreeFunction", diabetesPedigreeFunction));
             attributes.addElement(new weka.core.Attribute("age", age));
 
             FastVector diabetes = new FastVector();
