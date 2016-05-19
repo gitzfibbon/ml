@@ -41,7 +41,7 @@ namespace Bagging
             bagging.Test(testingInstances);
         }
 
-        private static Instances LoadData(string filePath, Category category = Category.CommonRanges)
+        private static Instances LoadData(string filePath, Category category = Category.Quartiles)
         {
             Trace.TraceInformation("Loading data from {0}", filePath);
 
@@ -68,6 +68,54 @@ namespace Bagging
             if (category == Category.Quartiles)
             {
                 instances = Diabetes.DefineQuartileAttributes();
+
+                // Calculate the bucket boundaries for each attribute except the target attribute
+                List<double[]> allBucketBoundaries = new List<double[]>();
+                for (int i = 0; i < Diabetes.NumAttributes - 1; i++)
+                {
+                    double[] attributeData = data.Select(x => x[i]).ToArray();
+                    double[] bucketBoundaries = Diabetes.BucketBoundaries(4, attributeData);
+                    allBucketBoundaries.Add(bucketBoundaries);
+                }
+
+                // Put each value into a quartile/bucket
+                for (int i = 0; i < data.Count; i++)
+                {
+                    Instance instance = new Instance(Diabetes.NumAttributes);
+                    instance.setDataset(instances);
+
+                    for (int j = 0; j < Diabetes.NumAttributes - 1; j++)
+                    {
+                        // Figure out which quartile/bucket the value should get dropped into
+                        double[] bucketBoundaries = allBucketBoundaries[j];
+                        for (int k = 0; k < bucketBoundaries.Length; k++)
+                        {
+                            double value = data[i][j];
+                            if (k == 0 && value <= bucketBoundaries[k])
+                            {
+                                // bucket k
+                                instance.setValue(j, k.ToString());
+                                break;
+                            }
+                            else if (k == bucketBoundaries.Length - 1)
+                            {
+                                // bucket k+1
+                                instance.setValue(j, (k+1).ToString());
+                                break;
+                            }
+                            else if (value > bucketBoundaries[k] && value <= bucketBoundaries[k + 1])
+                            {
+                                // bucket k+1
+                                instance.setValue(j, (k+1).ToString());
+                                break;
+                            }
+
+                        }
+                    }
+
+                    Diabetes.ValueForDiabetes(instance, Diabetes.NumAttributes - 1, data[i][Diabetes.NumAttributes-1]);
+                    instances.add(instance);
+                }
             }
             else
             {
@@ -98,59 +146,59 @@ namespace Bagging
             FastVector attributes = new FastVector();
 
             FastVector numberOfTimesPregnant = new FastVector();
+            numberOfTimesPregnant.addElement("0"); 
             numberOfTimesPregnant.addElement("1");
             numberOfTimesPregnant.addElement("2");
             numberOfTimesPregnant.addElement("3");
-            numberOfTimesPregnant.addElement("4");
             attributes.addElement(new weka.core.Attribute("numberOfTimesPregnant", numberOfTimesPregnant));
 
             FastVector plasmaGlucoseConcentration = new FastVector();
+            plasmaGlucoseConcentration.addElement("0"); 
             plasmaGlucoseConcentration.addElement("1");
             plasmaGlucoseConcentration.addElement("2");
             plasmaGlucoseConcentration.addElement("3");
-            plasmaGlucoseConcentration.addElement("4");
             attributes.addElement(new weka.core.Attribute("plasmaGlucoseConcentration", plasmaGlucoseConcentration));
 
             FastVector diastolicBloodPressure = new FastVector();
+            diastolicBloodPressure.addElement("0"); 
             diastolicBloodPressure.addElement("1");
             diastolicBloodPressure.addElement("2");
             diastolicBloodPressure.addElement("3");
-            diastolicBloodPressure.addElement("4");
             attributes.addElement(new weka.core.Attribute("diastolicBloodPressure", diastolicBloodPressure));
 
             FastVector tricepsSkinFoldThickness = new FastVector();
+            tricepsSkinFoldThickness.addElement("0"); 
             tricepsSkinFoldThickness.addElement("1");
             tricepsSkinFoldThickness.addElement("2");
             tricepsSkinFoldThickness.addElement("3");
-            tricepsSkinFoldThickness.addElement("4");
             attributes.addElement(new weka.core.Attribute("tricepsSkinFoldThickness", tricepsSkinFoldThickness));
 
             FastVector twoHourSerumInsulin = new FastVector();
+            twoHourSerumInsulin.addElement("0"); 
             twoHourSerumInsulin.addElement("1");
             twoHourSerumInsulin.addElement("2");
             twoHourSerumInsulin.addElement("3");
-            twoHourSerumInsulin.addElement("4");
             attributes.addElement(new weka.core.Attribute("twoHourSerumInsulin", twoHourSerumInsulin));
 
             FastVector bmi = new FastVector();
+            bmi.addElement("0"); 
             bmi.addElement("1");
             bmi.addElement("2");
             bmi.addElement("3");
-            bmi.addElement("4");
             attributes.addElement(new weka.core.Attribute("bmi", bmi));
 
             FastVector diabetesPedigreeFunction = new FastVector();
+            diabetesPedigreeFunction.addElement("0"); 
             diabetesPedigreeFunction.addElement("1");
             diabetesPedigreeFunction.addElement("2");
             diabetesPedigreeFunction.addElement("3");
-            diabetesPedigreeFunction.addElement("4");
             attributes.addElement(new weka.core.Attribute("diabetesPedigreeFunction", diabetesPedigreeFunction));
 
             FastVector age = new FastVector();
+            age.addElement("0"); 
             age.addElement("1");
             age.addElement("2");
             age.addElement("3");
-            age.addElement("4");
             attributes.addElement(new weka.core.Attribute("age", age));
 
             FastVector diabetes = new FastVector();
@@ -161,7 +209,6 @@ namespace Bagging
             Instances instances = new Instances("diabetes", attributes, 0);
             return instances;
         }
-
 
         // Define all the attributes for the diabetes dataset
         private static Instances DefineCategoricalAttributes()
@@ -416,17 +463,19 @@ namespace Bagging
             }
         }
 
-        private double[] BucketBoundaries(int numBuckets, double[] unsorted)
+        // Gets the numerical values for specified percentiles.
+        // Eg. if numBuckets is 2 it will return the median
+        // Eg. if numBuckets is 4 it will return the median and 1st and 3rd quartiles
+        private static double[] BucketBoundaries(int numBuckets, double[] unsorted)
         {
-            List<double> sorted = unsorted.ToList();
-            sorted.OrderBy(x => x);
+            List<double> sorted = unsorted.ToList().OrderBy(x => x).ToList();
 
-            double[] bucketBoundaries = new double[numBuckets];
-            for (int i = 0; i < numBuckets; i++)
+            double[] bucketBoundaries = new double[numBuckets - 1];
+            for (int i = 1; i < numBuckets; i++)
             {
-                double percentile = i / (double) numBuckets;
+                double percentile = i / (double)numBuckets;
                 int percentileIndex = Convert.ToInt32(Math.Floor(sorted.Count * percentile));
-                bucketBoundaries[i] = sorted[percentileIndex];
+                bucketBoundaries[i - 1] = sorted[percentileIndex];
             }
 
             return bucketBoundaries;
