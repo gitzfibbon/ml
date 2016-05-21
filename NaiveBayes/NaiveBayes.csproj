@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExtraFeatures.cs" />
     <Compile Include="NB.cs" />
     <Compile Include="Document.cs" />
     <Compile Include="Vocabulary.cs" />

@@ -16,32 +16,43 @@ namespace NaiveBayes
 
             Trace.TraceInformation("");
 
-            string trainingSetPath = ConfigurationManager.AppSettings["TrainingSetPath"];
-            string testingSetPath = ConfigurationManager.AppSettings["TestingSetPath"];
-            string laplaceSmoothing = ConfigurationManager.AppSettings["LaplaceSmoothing"];
+            string trainingSetPathConfig = ConfigurationManager.AppSettings["TrainingSetPath"];
+            string testingSetPathConfig = ConfigurationManager.AppSettings["TestingSetPath"];
+            string laplaceSmoothingConfig = ConfigurationManager.AppSettings["LaplaceSmoothing"];
+            string useExtraFeaturesConfig = ConfigurationManager.AppSettings["UseExtraFeatures"];
+            bool useExtraFeatures = false;
             
-            if (String.IsNullOrWhiteSpace(trainingSetPath))
+            if (String.IsNullOrWhiteSpace(trainingSetPathConfig))
             {
-                trainingSetPath = "TrainingRatings.txt";
-                Trace.TraceInformation("TrainingSetPath in config file is not set. Default to {0} in current directory.", trainingSetPath);
+                trainingSetPathConfig = "TrainingRatings.txt";
+                Trace.TraceInformation("TrainingSetPath in config file is not set. Default to {0} in current directory.", trainingSetPathConfig);
             }
 
-            if (String.IsNullOrWhiteSpace(testingSetPath))
+            if (String.IsNullOrWhiteSpace(testingSetPathConfig))
             {
-                testingSetPath = "TestingRatings.txt";
-                Trace.TraceInformation("TestingSetPath in config file is not set. Default to {0} in current directory.", testingSetPath);
+                testingSetPathConfig = "TestingRatings.txt";
+                Trace.TraceInformation("TestingSetPath in config file is not set. Default to {0} in current directory.", testingSetPathConfig);
             }
 
-            if (String.IsNullOrWhiteSpace(laplaceSmoothing))
+            if (String.IsNullOrWhiteSpace(laplaceSmoothingConfig))
             {
-                laplaceSmoothing = "1.0";
-                Trace.TraceInformation("LaplaceSmoothing in config file is not set. Default to {0}.", laplaceSmoothing);
+                laplaceSmoothingConfig = "1.0";
+                Trace.TraceInformation("LaplaceSmoothing in config file is not set. Default to {0}.", laplaceSmoothingConfig);
             }
 
+            if (String.IsNullOrWhiteSpace(useExtraFeaturesConfig))
+            {
+                useExtraFeatures = false;
+                Trace.TraceInformation("UseExtraFeatures in config file is not set. Default to {0}.", useExtraFeatures);
+            }
+            else
+            {
+                useExtraFeatures = Boolean.Parse(useExtraFeaturesConfig);
+            }
 
-            NB nb = new NB();
-            nb.Train(trainingSetPath, Double.Parse(laplaceSmoothing));
-            nb.Test(testingSetPath);
+            NB nb = new NB(useExtraFeatures);
+            nb.Train(trainingSetPathConfig, Double.Parse(laplaceSmoothingConfig));
+            nb.Test(testingSetPathConfig);
 
             Trace.TraceInformation("");
 

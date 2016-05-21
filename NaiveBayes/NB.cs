@@ -19,7 +19,13 @@ namespace NaiveBayes
         private Dictionary<string, Dictionary<string, double>> Likelihoods;
         private Dictionary<string, Document> Documents;
 
+        private bool UseExtraFeatures = false;
         private double LaplaceSmoothing = 1.0;
+
+        public NB(bool useExtraFeatures)
+        {
+            this.UseExtraFeatures = useExtraFeatures;
+        }
 
         public void Train(string trainingSetPath, double laplaceSmooting = 1.0)
         {
@@ -130,7 +136,7 @@ namespace NaiveBayes
                     return String.Empty;
                 }
 
-                double tempArgMax =  Math.Log(this.Targets[targetValue].PriorProbability) + cumulativeSumOfLogLikelihood;
+                double tempArgMax = Math.Log(this.Targets[targetValue].PriorProbability) + cumulativeSumOfLogLikelihood;
 
                 //Trace.TraceInformation("Item: {0}, TargetValue: {1}, Probability: {2}", document.Id, targetValue, tempArgMax);
 
@@ -157,12 +163,14 @@ namespace NaiveBayes
             this.Vocabulary = new Vocabulary();
             this.Targets = new Dictionary<string, Target>();
 
+            int progress = 0;
             using (StreamReader sr = File.OpenText(trainingSetPath))
             {
                 string s = String.Empty;
                 while ((s = sr.ReadLine()) != null)
                 {
                     string[] parts = s.Split(NB.Delimiter);
+                    string id = parts[0];
                     string value = parts[1];
 
                     if (!this.Targets.ContainsKey(value))
@@ -170,8 +178,16 @@ namespace NaiveBayes
                         this.Targets.Add(value, new Target(value));
                     }
 
+                    if (this.UseExtraFeatures)
+                    {
+                        Trace.TraceInformation("Finding extra features on file {0}", progress++.ToString());
+                        ExtraFeatures.AddExtraFeatures(id, this.Targets[value].Words);
+                        ExtraFeatures.AddExtraFeatures(id, this.Vocabulary.Words);
+                    }
+
                     this.Vocabulary.ExampleCount++;
                     this.Targets[value].DocumentCount++;
+
 
                     // Add the words to the Target
                     for (int i = 2; i < parts.Length; i = i + 2)
@@ -216,6 +232,7 @@ namespace NaiveBayes
 
             this.Documents = new Dictionary<string, Document>();
 
+            int progress = 0;
             using (StreamReader sr = File.OpenText(testingSetPath))
             {
                 string s = String.Empty;
@@ -228,6 +245,12 @@ namespace NaiveBayes
                     if (!this.Documents.ContainsKey(id))
                     {
                         this.Documents.Add(id, new Document(id, value));
+                    }
+
+                    if (this.UseExtraFeatures)
+                    {
+                        Trace.TraceInformation("Finding extra features on file {0}", progress++.ToString());
+                        ExtraFeatures.AddExtraFeatures(id, this.Documents[id].Words);
                     }
 
                     // Add the words to the Document
