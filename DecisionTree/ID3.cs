@@ -141,14 +141,14 @@ namespace DecisionTree
             return this.Predict(nextNode, example);
         }
 
-        public ID3Node Train(string arffFilePath, double confidenceLevel)
+        public ID3Node Train(string arffFilePath, double confidenceLevel, int maxDepth = 0)
         {
             // Load the examples into S
             Instances S = new weka.core.Instances(new java.io.FileReader(arffFilePath));
-            return this.Train(S, confidenceLevel);
+            return this.Train(S, confidenceLevel, maxDepth);
         }
 
-        public ID3Node Train(Instances S, double confidenceLevel)
+        public ID3Node Train(Instances S, double confidenceLevel, int maxDepth = 0)
         {
             int targetAttributeIndex = S.numAttributes() - 1;
 
@@ -160,8 +160,9 @@ namespace DecisionTree
             }
 
             this.RootNode = new ID3Node();
+            this.RootNode.Depth = 1;
 
-            this.TrainRecursive(this.RootNode, S, targetAttributeIndex, attributeIndexes, confidenceLevel);
+            this.TrainRecursive(this.RootNode, S, targetAttributeIndex, attributeIndexes, confidenceLevel, maxDepth);
 
             if (Log.NodeOn == true)
             {
@@ -174,7 +175,7 @@ namespace DecisionTree
             return this.RootNode;
         }
 
-        public void TrainRecursive(ID3Node root, Instances S, int targetAttributeIndex, List<int> attributeList, double confidenceLevel)
+        public void TrainRecursive(ID3Node root, Instances S, int targetAttributeIndex, List<int> attributeList, double confidenceLevel, int maxDepth = 0)
         {
             // For each possible discrete value that the target attribute can have, count how many times it is present in the examples
             Dictionary<int, Instances> targetValueCounts = new Dictionary<int, Instances>();
@@ -337,13 +338,21 @@ namespace DecisionTree
             for (int i = 0; i < S.attribute(maxGainRatioAttribute).numValues(); i++)
             {
                 ID3Node newChild = new ID3Node();
+                newChild.Depth = root.Depth + 1;
                 root.ChildNodes.Add(newChild);
 
-                if (examplesVi[i].numInstances() == 0)
+                if (examplesVi[i].numInstances() == 0) // no more examples to split on
                 {
                     newChild.IsLeaf = true;
                     newChild.TargetValue = mostCommonTargetValue;
                     Log.LogInfo("No instances to split on. Create new leaf child from parent split {0}, new value {1}", root.SplitAttributeIndex, newChild.TargetValue, root.IsLeaf, root.Weight);
+                }
+                else if (maxDepth > 0 && newChild.Depth > maxDepth) // we hit max depth
+                {
+                    newChild.IsLeaf = true;
+                    newChild.TargetValue = mostCommonTargetValue;
+                    Log.LogInfo("Hit max depth of {0}. Create new leaf child from parent split {1}, new value {2}", maxDepth, root.SplitAttributeIndex, newChild.TargetValue, root.IsLeaf, root.Weight);
+
                 }
                 else
                 {

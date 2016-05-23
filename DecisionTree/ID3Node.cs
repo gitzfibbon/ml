@@ -23,6 +23,9 @@ namespace DecisionTree
 
         public double Weight = 1;
 
+        // The depth of this node
+        public int Depth = 1;
+
         public static int MaxDepth(ID3Node node)
         {
             if (node.IsLeaf) { return 1; }
