@@ -17,6 +17,12 @@ namespace Bagging
         Buckets = 1
     }
 
+    public enum Mode
+    {
+        Train = 0,
+        Test = 1
+    }
+
     /// <summary>
     /// This implementation is specific to this dataset
     /// http://archive.ics.uci.edu/ml/datasets/Pima+Indians+Diabetes
@@ -26,6 +32,7 @@ namespace Bagging
         private const char Delimiter = ',';
         private const int NumAttributes = 9;
         private const int NumBuckets = 4;
+        private static List<double[]> AllBucketBoundaries;
 
         public static void Run(string trainingSetPath, string testingSetPath, int numberOfModels, int? randomSeed)
         {
@@ -34,17 +41,17 @@ namespace Bagging
             Trace.TraceInformation("TestingSetPath: {0}", testingSetPath);
             Trace.TraceInformation("Models: {0}", numberOfModels);
 
-            Instances trainingInstances = Diabetes.LoadData(trainingSetPath);
+            Instances trainingInstances = Diabetes.LoadData(trainingSetPath, Mode.Train);
             Bagging bagging = new Bagging();
             bagging.Train(trainingInstances, numberOfModels, randomSeed);
-            Instances testingInstances = Diabetes.LoadData(testingSetPath);
+            Instances testingInstances = Diabetes.LoadData(testingSetPath, Mode.Test);
             bagging.TestNonBagging(testingInstances);
             bagging.Test(testingInstances);
         }
 
-        private static Instances LoadData(string filePath, Category category = Category.Buckets)
+        public static Instances LoadData(string filePath, Mode mode, Category category = Category.Buckets)
         {
-            Trace.TraceInformation("Loading data from {0}", filePath);
+            Trace.TraceInformation("Loading {0} data from {1}", Enum.GetName(mode.GetType(), mode), filePath);
 
             List<double[]> data = new List<double[]>();
 
@@ -71,12 +78,9 @@ namespace Bagging
                 instances = Diabetes.DefineBucketAttributes(Diabetes.NumBuckets);
 
                 // Calculate the bucket boundaries for each attribute except the target attribute
-                List<double[]> allBucketBoundaries = new List<double[]>();
-                for (int i = 0; i < Diabetes.NumAttributes - 1; i++)
+                if (mode == Mode.Train)
                 {
-                    double[] attributeData = data.Select(x => x[i]).ToArray();
-                    double[] bucketBoundaries = Diabetes.BucketBoundaries(Diabetes.NumBuckets, attributeData);
-                    allBucketBoundaries.Add(bucketBoundaries);
+                    Diabetes.AllBucketBoundaries = Diabetes.CalculateBucketBoundaries(data);
                 }
 
                 // Put each value into a quartile/bucket
@@ -88,7 +92,7 @@ namespace Bagging
                     for (int j = 0; j < Diabetes.NumAttributes - 1; j++)
                     {
                         // Figure out which quartile/bucket the value should get dropped into
-                        double[] bucketBoundaries = allBucketBoundaries[j];
+                        double[] bucketBoundaries = Diabetes.AllBucketBoundaries[j];
                         for (int k = 0; k < bucketBoundaries.Length; k++)
                         {
                             double value = data[i][j];
@@ -248,6 +252,20 @@ namespace Bagging
 
             Instances instances = new Instances("diabetes", attributes, 0);
             return instances;
+        }
+
+        private static List<double[]> CalculateBucketBoundaries(List<double[]> data)
+        {
+            // Calculate the bucket boundaries for each attribute except the target attribute
+            List<double[]> allBucketBoundaries = new List<double[]>();
+            for (int i = 0; i < Diabetes.NumAttributes - 1; i++)
+            {
+                double[] attributeData = data.Select(x => x[i]).ToArray();
+                double[] bucketBoundaries = Diabetes.BucketBoundaries(Diabetes.NumBuckets, attributeData);
+                allBucketBoundaries.Add(bucketBoundaries);
+            }
+
+            return allBucketBoundaries;
         }
 
         private static void ValueForNumberOfTimesPregnant(Instance instance, int attributeIndex, double inputValue)

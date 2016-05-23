@@ -56,7 +56,7 @@ namespace Bagging
 
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                Console.WriteLine("Done. Press the anykey to continue.");
+                Console.WriteLine("Done. Press enter to continue.");
                 Console.Read();
             }
         }
