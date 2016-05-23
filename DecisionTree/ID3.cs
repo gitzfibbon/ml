@@ -170,7 +170,7 @@ namespace DecisionTree
             }
 
             Log.LogStats("Number of Nodes is {0}", ID3Node.NodeCount(this.RootNode));
-            Log.LogStats("Max Tree Depth is {0}", ID3Node.MaxDepth(this.RootNode));
+            Log.LogStats("Max Tree Depth including leaves is {0}", ID3Node.MaxDepth(this.RootNode));
 
             return this.RootNode;
         }
@@ -361,7 +361,7 @@ namespace DecisionTree
                     newChild.IsLeaf = false;
                     newChild.SplitAttributeIndex = i;
                     newChild.Weight = examplesVi[i].numInstances() / (double)totalExamplesVi;
-                    this.TrainRecursive(newChild, examplesVi[i], targetAttributeIndex, newAttributeList, confidenceLevel);
+                    this.TrainRecursive(newChild, examplesVi[i], targetAttributeIndex, newAttributeList, confidenceLevel, maxDepth);
                 }
 
             }

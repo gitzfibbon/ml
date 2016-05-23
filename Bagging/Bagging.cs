@@ -21,16 +21,16 @@ namespace Bagging
             // Turn off all the logging from ID3
             DecisionTree.Log.GainOn = false;
             DecisionTree.Log.InfoOn = false;
-            DecisionTree.Log.NodeOn = false;
-            DecisionTree.Log.StatsOn = false;
+            DecisionTree.Log.NodeOn = true;
+            DecisionTree.Log.StatsOn = true;
             DecisionTree.Log.VerboseOn = false;
         }
 
-        public void Train(Instances instances, int numberOfModels, int? randomSeed = null)
+        public void Train(Instances instances, int numberOfModels, int? randomSeed = null, int maxDepth = 0)
         {
             // First train and test without bagging
             this.NonBaggingModel = new ID3();
-            this.NonBaggingModel.Train(instances, Bagging.ConfidenceLevel);
+            this.NonBaggingModel.Train(instances, Bagging.ConfidenceLevel, maxDepth);
 
             this.Models = new List<ID3>();
 
@@ -47,7 +47,7 @@ namespace Bagging
                 }
 
                 ID3 model = new ID3();
-                model.Train(newInstances, Bagging.ConfidenceLevel);
+                model.Train(newInstances, Bagging.ConfidenceLevel, maxDepth);
                 this.Models.Add(model);
             }
         }

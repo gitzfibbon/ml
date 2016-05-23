@@ -23,6 +23,8 @@ namespace BV
             string numberOfModelsConfig = ConfigurationManager.AppSettings["NumberOfModels"];
             string randomSeedConfig = ConfigurationManager.AppSettings["RandomSeed"];
             int? randomSeed = null;
+            string maxTreeDepthConfig = ConfigurationManager.AppSettings["MaxTreeDepth"];
+            int maxTreeDepth = 0;
 
             if (String.IsNullOrWhiteSpace(trainingSetPathConfig))
             {
@@ -52,7 +54,13 @@ namespace BV
                 randomSeed = Int32.Parse(randomSeedConfig);
             }
 
-            Diabetes.Run(trainingSetPathConfig, testingSetPathConfig, Int32.Parse(numberOfModelsConfig), randomSeed);
+            if (String.IsNullOrWhiteSpace(maxTreeDepthConfig))
+            {
+                numberOfModelsConfig = "0";
+                Trace.TraceInformation("MaxTreeDepth in config file is not set. Default to {0}.", maxTreeDepthConfig);
+            }
+
+            BV.RunNonBagging(trainingSetPathConfig, testingSetPathConfig, Int32.Parse(maxTreeDepthConfig));
 
             Trace.TraceInformation("");
 

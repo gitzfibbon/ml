@@ -14,20 +14,36 @@ namespace BV
     // Bias-Variance
     public class BV
     {
-        public static void Run(string trainingSetPath, string testingSetPath, int numberOfModels, int? randomSeed)
+        public static void RunNonBagging(string trainingSetPath, string testingSetPath, int maxTreeDepth)
         {
-            Trace.TraceInformation("Starting Bias-Variance Program");
+            Trace.TraceInformation("Starting Bias-Variance for NonBagging");
             Trace.TraceInformation("TrainingSetPath: {0}", trainingSetPath);
             Trace.TraceInformation("TestingSetPath: {0}", testingSetPath);
-            Trace.TraceInformation("Models: {0}", numberOfModels);
-            Trace.TraceInformation("Random Seed: {0}", randomSeed);
+            Trace.TraceInformation("Max Tree Depth: {0}", maxTreeDepth);
 
             Instances trainingInstances = Diabetes.LoadData(trainingSetPath, Mode.Train);
             Bagging.Bagging bagging = new Bagging.Bagging();
-            bagging.Train(trainingInstances, numberOfModels, randomSeed);
+            bagging.Train(trainingInstances, 0, null, maxTreeDepth);
             Instances testingInstances = Diabetes.LoadData(testingSetPath, Mode.Test);
             bagging.TestNonBagging(testingInstances);
-            bagging.Test(testingInstances);
+            //bagging.Test(testingInstances);
+        }
+
+        public static void RunBagging(string trainingSetPath, string testingSetPath, int numberOfModels, int? randomSeed, int maxTreeDepth)
+        {
+            Trace.TraceInformation("Starting Bias-Variance for Bagging");
+            Trace.TraceInformation("TrainingSetPath: {0}", trainingSetPath);
+            Trace.TraceInformation("TestingSetPath: {0}", testingSetPath);
+            Trace.TraceInformation("Models: {0}", numberOfModels);
+            Trace.TraceInformation("Random Seed: {0}", randomSeed.ToString());
+            Trace.TraceInformation("Max Tree Depth: {0}", maxTreeDepth);
+
+            Instances trainingInstances = Diabetes.LoadData(trainingSetPath, Mode.Train);
+            Bagging.Bagging bagging = new Bagging.Bagging();
+            bagging.Train(trainingInstances, numberOfModels, randomSeed, maxTreeDepth);
+            Instances testingInstances = Diabetes.LoadData(testingSetPath, Mode.Test);
+            bagging.TestNonBagging(testingInstances);
+            //bagging.Test(testingInstances);
         }
     }
 }
