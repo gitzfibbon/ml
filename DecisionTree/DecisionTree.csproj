@@ -139,7 +139,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BiasVariance.cs" />
     <Compile Include="ChiSquare.cs" />
     <Compile Include="ChiSquareUtils.cs" />
     <Compile Include="ID3Node.cs" />

@@ -87,11 +87,12 @@ details.
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DecisionTree
+namespace BV
 {
     public class BiasVariance
     {
@@ -99,66 +100,74 @@ namespace DecisionTree
         private const int MaxTrSets = 100;
         private const int MaxClasses = 100;
 
-        public static void biasvar(int[] classes, int[,] preds, int ntestexs, int ntrsets, float loss, float bias, float var, float varp, float varn, float varc)
+        public static void biasvar(List<int> classes, List<List<int>> preds, int ntestexs, int ntrsets, ref double loss, ref double bias, ref double var, ref double varp, ref double varn, ref double varc)
         {
-            classes = new int[BiasVariance.MaxTestExs];
-            preds = new int[BiasVariance.MaxTestExs,BiasVariance.MaxTrSets];
-            classes = new int[BiasVariance.MaxTestExs];
+            double lossx = 0;
+            double biasx = 0;
+            double varx = 0;
 
-            //{
-            //  int e;
-            //  float lossx, biasx, varx;
+            loss = 0.0;
+            bias = 0.0;
+            varp = 0.0;
+            varn = 0.0;
+            varc = 0.0;
 
-            //  *loss = 0.0;
-            //  *bias = 0.0;
-            //  *varp = 0.0;
-            //  *varn = 0.0;
-            //  *varc = 0.0;
-            //  for (e = 0; e < ntestexs; e++) {
-            //    biasvarx(classes[e], &preds[e], ntrsets, &lossx, &biasx, &varx);
-            //    *loss += lossx;
-            //    *bias += biasx;
-            //    if (biasx != 0.0) {
-            //      *varn += varx;
-            //      *varc += 1.0;
-            //      *varc -= lossx;
-            //    }
-            //    else
-            //      *varp += varx;
-            //  }
-            //  *loss /= ntestexs;
-            //  *bias /= ntestexs;
-            //  *var = *loss - *bias;
-            //  *varp /= ntestexs;
-            //  *varn /= ntestexs;
-            //  *varc /= ntestexs;
-            //}
+            for (int e = 0; e < ntestexs; e++)
+            {
+                BiasVariance.biasvarx(classes[e], preds[e], ntrsets, ref lossx, ref biasx, ref varx);
+                loss += lossx;
+                bias += biasx;
+                if (biasx != 0.0)
+                {
+                    varn += varx;
+                    varc += 1.0;
+                    varc -= lossx;
+                }
+                else
+                    varp += varx;
+            }
 
-            //biasvarx(classx, predsx, ntrsets, lossx, biasx, varx)
-            //int classx, predsx[MaxTrSets], ntrsets;
-            //float *lossx, *biasx, *varx;
-            //{
-            //  int c, t, nclass[MaxClasses], majclass = -1, nmax = 0;
+            loss /= ntestexs;
+            bias /= ntestexs;
+            var = loss - bias;
+            varp /= ntestexs;
+            varn /= ntestexs;
+            varc /= ntestexs;
 
-            //  for (c = 0; c < MaxClasses; c++)
-            //    nclass[c] = 0;
-            //  for (t = 0; t < ntrsets; t++)
-            //    nclass[predsx[t]]++;
-            //  for (c = 0; c < MaxClasses; c++)
-            //    if (nclass[c] > nmax) {
-            //      majclass = c;
-            //      nmax = nclass[c];
-            //    }
-            //  *lossx = 1.0 - (float)nclass[classx] / ntrsets;
-            //  *biasx = (float)(majclass != classx);
-            //  *varx = 1.0 - (float)nclass[majclass] / ntrsets;
-            //}
-
-            //#undef MaxTestExs
-            //#undef MaxTrSets
-            //#undef MaxClasses
-
-
+            Trace.TraceInformation("loss,bias,var,varp,varn,varc");
+            Trace.TraceInformation("{0},{1},{2},{3},{4},{5}", loss, bias, var, varp, varn, varc);
         }
+
+        private static void biasvarx(int classx, List<int> predsx, int ntrsets, ref double lossx, ref double biasx, ref double varx)
+        {
+            int[] nclass = new int[BiasVariance.MaxClasses];
+            int majclass = -1;
+            int nmax = 0;
+
+            for (int c = 0; c < BiasVariance.MaxClasses; c++)
+            {
+                nclass[c] = 0;
+            }
+
+            for (int t = 0; t < ntrsets; t++)
+            {
+                nclass[predsx[t]]++;
+            }
+
+            for (int c = 0; c < BiasVariance.MaxClasses; c++)
+            {
+                if (nclass[c] > nmax)
+                {
+                    majclass = c;
+                    nmax = nclass[c];
+                }
+            }
+
+            lossx = 1.0 - (double)nclass[classx] / ntrsets;
+            biasx = Convert.ToDouble(majclass != classx);
+            varx = 1.0 - (double)nclass[majclass] / ntrsets;
+        }
+
+
     }
 }

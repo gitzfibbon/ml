@@ -52,8 +52,11 @@ namespace Bagging
             }
         }
 
-        public void TestNonBagging(Instances instances)
+        public List<int> TestNonBagging(Instances instances)
         {
+            // List of predictions for each test instance
+            List<int> predictions = new List<int>();
+
             int targetAttributeIndex = instances.numAttributes() - 1;
             int correct = 0;
             int incorrect = 0;
@@ -61,6 +64,7 @@ namespace Bagging
             for (int i = 0; i < instances.numInstances(); i++)
             {
                 int prediction = this.NonBaggingModel.Predict(this.NonBaggingModel.RootNode, instances.instance(i));
+                predictions.Add(prediction);
                 int actual = (int)instances.instance(i).value(targetAttributeIndex);
 
                 if (prediction == actual) { correct++; }
@@ -72,6 +76,8 @@ namespace Bagging
             Trace.TraceInformation("Correct: {0}", correct);
             Trace.TraceInformation("Incorrect: {0}", incorrect);
             Trace.TraceInformation("Accuracy: {0}", correct / (double)(correct + incorrect));
+
+            return predictions;
         }
 
         public void Test(Instances instances)
