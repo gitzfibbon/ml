@@ -28,7 +28,35 @@ namespace BV
 
             // Predict
             Instances testingInstances = Diabetes.LoadData(testingSetPath, Mode.Test);
-            bagging.TestNonBagging(testingInstances);
+            List<int> predictions = bagging.TestNonBagging(testingInstances);
+
+            // Calculate Bias and Variance
+
+            // Get the class for each test example
+            int targetAttribute = testingInstances.numAttributes() - 1;
+            List<int> classes = new List<int>();
+            for (int i = 0; i < testingInstances.numInstances(); i++)
+            {
+                classes.Add((int)testingInstances.instance(i).value(targetAttribute));
+            }
+
+            // Get the prediction for every test example, for every set of instanes
+            List<List<int>> allPredictions = new List<List<int>>();
+            for (int j = 0; j < 1; j++)
+            {
+                for (int i = 0; i < testingInstances.numInstances(); i++)
+                {
+                    if (j == 0)
+                    {
+                        allPredictions.Add(new List<int>());
+                    }
+
+                    allPredictions[i].Add(predictions[i]);
+                }
+            }
+
+
+            BiasVariance.biasvar(classes, allPredictions, testingInstances.numInstances(), 1);
 
         }
 
@@ -42,10 +70,43 @@ namespace BV
             Trace.TraceInformation("Max Tree Depth: {0}", maxTreeDepth);
 
             Instances trainingInstances = Diabetes.LoadData(trainingSetPath, Mode.Train);
-            Bagging.Bagging bagging = new Bagging.Bagging();
-            bagging.Train(trainingInstances, numberOfModels, randomSeed, maxTreeDepth);
             Instances testingInstances = Diabetes.LoadData(testingSetPath, Mode.Test);
-            bagging.Test(testingInstances);
+
+            // Stores the predictions for every training set
+            List<List<int>> allPredictions = new List<List<int>>();
+
+            for (int i = 0; i < numberOfModels; i++)
+            {
+                Bagging.Bagging bagging = new Bagging.Bagging();
+                bagging.Train(trainingInstances, 1, randomSeed, maxTreeDepth);
+                List<int> predictions = bagging.Test(testingInstances);
+
+                // Get the prediction for every test example, for every set of instanes
+                for (int j = 0; j < 1; j++)
+                {
+                    for (int k = 0; k < testingInstances.numInstances(); k++)
+                    {
+                        if (j == 0)
+                        {
+                            allPredictions.Add(new List<int>());
+                        }
+
+                        allPredictions[j].Add(predictions[k]);
+                    }
+                }
+            }
+
+            // Calculate Bias and Variance
+
+            // Get the class for each test example
+            int targetAttribute = testingInstances.numAttributes() - 1;
+            List<int> classes = new List<int>();
+            for (int i = 0; i < testingInstances.numInstances(); i++)
+            {
+                classes.Add((int)testingInstances.instance(i).value(targetAttribute));
+            }
+
+            BiasVariance.biasvar(classes, allPredictions, testingInstances.numInstances(), 1);
         }
     }
 }

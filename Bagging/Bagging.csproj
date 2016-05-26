@@ -50,7 +50,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bagging.cs" />
-    <Compile Include="BiasVariance.cs" />
     <Compile Include="Diabetes.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
