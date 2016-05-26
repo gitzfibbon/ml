@@ -92,13 +92,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BV
+namespace Bagging
 {
     public class BiasVariance
     {
         private const int MaxTestExs = 10000;
         private const int MaxTrSets = 100;
         private const int MaxClasses = 100;
+
+        public static void biasvar(List<int> classes, List<List<int>> preds, int ntestexs, int ntrsets)
+        {
+            double loss = 0;
+            double bias = 0;
+            double var = 0;
+            double varp = 0;
+            double varn = 0;
+            double varc = 0;
+
+            BiasVariance.biasvar(classes, preds, ntestexs, ntrsets, ref loss, ref bias, ref var, ref varp, ref varn, ref varc);
+        }
 
         public static void biasvar(List<int> classes, List<List<int>> preds, int ntestexs, int ntrsets, ref double loss, ref double bias, ref double var, ref double varp, ref double varn, ref double varc)
         {
@@ -134,6 +146,7 @@ namespace BV
             varn /= ntestexs;
             varc /= ntestexs;
 
+            Trace.TraceInformation("");
             Trace.TraceInformation("loss,bias,var,varp,varn,varc");
             Trace.TraceInformation("{0},{1},{2},{3},{4},{5}", loss, bias, var, varp, varn, varc);
         }

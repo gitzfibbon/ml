@@ -77,6 +77,34 @@ namespace Bagging
             Trace.TraceInformation("Incorrect: {0}", incorrect);
             Trace.TraceInformation("Accuracy: {0}", correct / (double)(correct + incorrect));
 
+            // Calculate Bias and Variance
+
+            // Get the class for each test example
+            int targetAttribute = instances.numAttributes() - 1;
+            List<int> classes = new List<int>();
+            for (int i = 0; i < instances.numInstances(); i++)
+            {
+                classes.Add((int)instances.instance(i).value(targetAttribute));
+            }
+
+            // Get the prediction for every test example, for every set of instanes
+            List<List<int>> allPredictions = new List<List<int>>();
+            for (int j = 0; j < 1; j++)
+            {
+                for (int i = 0; i < instances.numInstances(); i++)
+                {
+                    if (j == 0)
+                    {
+                        allPredictions.Add(new List<int>());
+                    }
+
+                    allPredictions[i].Add(predictions[i]);
+                }
+            }
+
+
+            BiasVariance.biasvar(classes, allPredictions, instances.numInstances(), 1);
+
             return predictions;
         }
 
