@@ -24,7 +24,7 @@ namespace BV
             string randomSeedConfig = ConfigurationManager.AppSettings["RandomSeed"];
             int? randomSeed = null;
             string maxTreeDepthConfig = ConfigurationManager.AppSettings["MaxTreeDepth"];
-            int maxTreeDepth = 0;
+            string numberOfBootstrapSamplesConfig = ConfigurationManager.AppSettings["NumberOfBootstrapSamples"];
 
             if (String.IsNullOrWhiteSpace(trainingSetPathConfig))
             {
@@ -44,6 +44,12 @@ namespace BV
                 Trace.TraceInformation("NumberOfModels in config file is not set. Default to {0}.", numberOfModelsConfig);
             }
 
+            if (String.IsNullOrWhiteSpace(numberOfBootstrapSamplesConfig))
+            {
+                numberOfBootstrapSamplesConfig = "1";
+                Trace.TraceInformation("NumberOfBootstrapSamples in config file is not set. Default to {0}.", numberOfBootstrapSamplesConfig);
+            }
+
             if (String.IsNullOrWhiteSpace(randomSeedConfig))
             {
                 randomSeed = null;
@@ -60,7 +66,9 @@ namespace BV
                 Trace.TraceInformation("MaxTreeDepth in config file is not set. Default to {0}.", maxTreeDepthConfig);
             }
 
-            BV.RunNonBagging(trainingSetPathConfig, testingSetPathConfig, Int32.Parse(maxTreeDepthConfig));
+            //BV.RunNonBagging(trainingSetPathConfig, testingSetPathConfig, Int32.Parse(maxTreeDepthConfig));
+            BV.RunBagging(trainingSetPathConfig, testingSetPathConfig, Int32.Parse(numberOfModelsConfig), Int32.Parse(numberOfBootstrapSamplesConfig), randomSeed, Int32.Parse(maxTreeDepthConfig));
+
 
             Trace.TraceInformation("");
 

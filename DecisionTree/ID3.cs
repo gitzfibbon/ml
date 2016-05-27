@@ -169,8 +169,8 @@ namespace DecisionTree
                 ID3Node.DFS(this.RootNode, S);
             }
 
-            Log.LogStats("Number of Nodes is {0}", ID3Node.NodeCount(this.RootNode));
-            Log.LogStats("Max Tree Depth including leaves is {0}", ID3Node.MaxDepth(this.RootNode));
+            Log.LogNode("Number of Nodes is {0}", ID3Node.NodeCount(this.RootNode));
+            Log.LogNode("Max Tree Depth including leaves is {0}", ID3Node.MaxDepth(this.RootNode));
 
             return this.RootNode;
         }

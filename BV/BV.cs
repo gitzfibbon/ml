@@ -60,12 +60,13 @@ namespace BV
 
         }
 
-        public static void RunBagging(string trainingSetPath, string testingSetPath, int numberOfModels, int? randomSeed, int maxTreeDepth)
+        public static void RunBagging(string trainingSetPath, string testingSetPath, int numberOfModels, int bootstrapSamples, int? randomSeed, int maxTreeDepth)
         {
             Trace.TraceInformation("Starting Bias-Variance for Bagging");
             Trace.TraceInformation("TrainingSetPath: {0}", trainingSetPath);
             Trace.TraceInformation("TestingSetPath: {0}", testingSetPath);
             Trace.TraceInformation("Models: {0}", numberOfModels);
+            Trace.TraceInformation("Bootstrap Samples: {0}", bootstrapSamples);
             Trace.TraceInformation("Random Seed: {0}", randomSeed.ToString());
             Trace.TraceInformation("Max Tree Depth: {0}", maxTreeDepth);
 
@@ -75,25 +76,22 @@ namespace BV
             // Stores the predictions for every training set
             List<List<int>> allPredictions = new List<List<int>>();
 
-            for (int i = 0; i < numberOfModels; i++)
+            for (int i = 0; i < bootstrapSamples; i++)
             {
                 Bagging.Bagging bagging = new Bagging.Bagging();
-                bagging.Train(trainingInstances, 1, randomSeed, maxTreeDepth);
+                bagging.Train(trainingInstances, numberOfModels, randomSeed, maxTreeDepth);
                 List<int> predictions = bagging.Test(testingInstances);
 
-                // Get the prediction for every test example, for every set of instanes
-                for (int j = 0; j < 1; j++)
+                for (int k = 0; k < testingInstances.numInstances(); k++)
                 {
-                    for (int k = 0; k < testingInstances.numInstances(); k++)
+                    if (i == 0)
                     {
-                        if (j == 0)
-                        {
-                            allPredictions.Add(new List<int>());
-                        }
-
-                        allPredictions[j].Add(predictions[k]);
+                        allPredictions.Add(new List<int>());
                     }
+
+                    allPredictions[k].Add(predictions[k]);
                 }
+
             }
 
             // Calculate Bias and Variance
@@ -106,7 +104,7 @@ namespace BV
                 classes.Add((int)testingInstances.instance(i).value(targetAttribute));
             }
 
-            BiasVariance.biasvar(classes, allPredictions, testingInstances.numInstances(), 1);
+            BiasVariance.biasvar(classes, allPredictions, testingInstances.numInstances(), bootstrapSamples);
         }
     }
 }
