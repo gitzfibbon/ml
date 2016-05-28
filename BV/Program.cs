@@ -69,6 +69,12 @@ namespace BV
             //BV.RunNonBagging(trainingSetPathConfig, testingSetPathConfig, Int32.Parse(maxTreeDepthConfig));
             BV.RunBagging(trainingSetPathConfig, testingSetPathConfig, Int32.Parse(numberOfModelsConfig), Int32.Parse(numberOfBootstrapSamplesConfig), randomSeed, Int32.Parse(maxTreeDepthConfig));
 
+            //BV.RunBagging(trainingSetPathConfig, testingSetPathConfig, numberOfModels: 30, bootstrapSamples: 30, randomSeed: randomSeed, maxTreeDepth: 1);
+            //BV.RunBagging(trainingSetPathConfig, testingSetPathConfig, numberOfModels: 30, bootstrapSamples: 30, randomSeed: randomSeed, maxTreeDepth: 2);
+            //BV.RunBagging(trainingSetPathConfig, testingSetPathConfig, numberOfModels: 30, bootstrapSamples: 30, randomSeed: randomSeed, maxTreeDepth: 3);
+            //BV.RunBagging(trainingSetPathConfig, testingSetPathConfig, numberOfModels: 30, bootstrapSamples: 30, randomSeed: randomSeed, maxTreeDepth: 5);
+            //BV.RunBagging(trainingSetPathConfig, testingSetPathConfig, numberOfModels: 50, bootstrapSamples: 30, randomSeed: randomSeed, maxTreeDepth: 10);
+
 
             Trace.TraceInformation("");
 

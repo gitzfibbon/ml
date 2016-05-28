@@ -22,7 +22,7 @@ namespace Bagging
             DecisionTree.Log.GainOn = false;
             DecisionTree.Log.InfoOn = false;
             DecisionTree.Log.NodeOn = false;
-            DecisionTree.Log.StatsOn = true;
+            DecisionTree.Log.StatsOn = false;
             DecisionTree.Log.VerboseOn = false;
         }
 
