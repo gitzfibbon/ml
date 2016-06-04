@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Bagging;
+
 namespace NaiveBayes
 {
     class Program
@@ -50,9 +52,16 @@ namespace NaiveBayes
                 useExtraFeatures = Boolean.Parse(useExtraFeaturesConfig);
             }
 
+            // This is how we normally use the program. Comment out for working on A4.
             NB nb = new NB(useExtraFeatures);
             nb.Train(trainingSetPathConfig, Double.Parse(laplaceSmoothingConfig));
             nb.Test(testingSetPathConfig);
+
+            // This is for A4 only
+            //NB nb = new NB(false);
+            //Diabetes.GenerateNaiveBayesInputFiles(@"C:\coding\ml\data\diabetes\A4_diabetes_train.txt", @"C:\coding\ml\data\diabetes\A4_diabetes_test.txt", trainingSetPathConfig, testingSetPathConfig);
+            //nb.Train(trainingSetPathConfig, Double.Parse(laplaceSmoothingConfig));
+            //nb.Test(testingSetPathConfig);
 
             Trace.TraceInformation("");
 

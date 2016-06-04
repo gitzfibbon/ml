@@ -31,7 +31,7 @@ namespace Bagging
     {
         private const char Delimiter = ',';
         private const int NumAttributes = 9;
-        private const int NumBuckets = 4;
+        private const int NumBuckets = 8;
         private static List<double[]> AllBucketBoundaries;
 
         public static void Run(string trainingSetPath, string testingSetPath, int numberOfModels, int? randomSeed)
@@ -105,20 +105,20 @@ namespace Bagging
                             else if (k == bucketBoundaries.Length - 1)
                             {
                                 // bucket k+1
-                                instance.setValue(j, (k+1).ToString());
+                                instance.setValue(j, (k + 1).ToString());
                                 break;
                             }
                             else if (value > bucketBoundaries[k] && value <= bucketBoundaries[k + 1])
                             {
                                 // bucket k+1
-                                instance.setValue(j, (k+1).ToString());
+                                instance.setValue(j, (k + 1).ToString());
                                 break;
                             }
 
                         }
                     }
 
-                    Diabetes.ValueForDiabetes(instance, Diabetes.NumAttributes - 1, data[i][Diabetes.NumAttributes-1]);
+                    Diabetes.ValueForDiabetes(instance, Diabetes.NumAttributes - 1, data[i][Diabetes.NumAttributes - 1]);
                     instances.add(instance);
                 }
             }
@@ -144,6 +144,53 @@ namespace Bagging
             }
 
             return instances;
+        }
+
+        public static void GenerateNaiveBayesInputFiles(string trainingInputFile, string testingInputFile, string trainingOutputFile, string testingOutputFile)
+        {
+            // We don't want to change the naive bayes implementation for spam detection. So, let target attribute 0 = "ham" and 1 = "spam"
+
+            // Training Data
+
+            Instances trainingInstances = Diabetes.LoadData(trainingInputFile, Mode.Train, Category.Buckets);
+            int targetAttributeIndex = Diabetes.NumAttributes - 1;
+
+            StringBuilder trainingOutput = new StringBuilder();
+            for (int i = 0; i < trainingInstances.numInstances(); i++)
+            {
+                trainingOutput.AppendFormat("{0} {1}", i, trainingInstances.instance(i).value(targetAttributeIndex) == 0 ? "ham" : "spam");
+
+                for (int j = 0; j < trainingInstances.numAttributes() - 1; j++)
+                {
+                    trainingOutput.AppendFormat(" {0}_{1} {2}", j, trainingInstances.instance(i).value(j), 1);
+                    //trainingOutput.AppendFormat(" {0} {1}", j, trainingInstances.instance(i).value(j));
+                }
+
+                trainingOutput.AppendLine();
+            }
+
+            File.WriteAllText(trainingOutputFile, trainingOutput.ToString());
+
+
+            // Testing Data
+
+            Instances testingInstances = Diabetes.LoadData(testingInputFile, Mode.Test, Category.Buckets);
+            StringBuilder testingOutput = new StringBuilder();
+            for (int i = 0; i < testingInstances.numInstances(); i++)
+            {
+                testingOutput.AppendFormat("{0} {1}", i, testingInstances.instance(i).value(targetAttributeIndex) == 0 ? "ham" : "spam");
+
+                for (int j = 0; j < testingInstances.numAttributes() - 1; j++)
+                {
+                    testingOutput.AppendFormat(" {0}_{1} {2}", j, testingInstances.instance(i).value(j), 1);
+                    //testingOutput.AppendFormat(" {0} {1}", j, testingInstances.instance(i).value(j));
+                }
+
+                testingOutput.AppendLine();
+            }
+
+            File.WriteAllText(testingOutputFile, testingOutput.ToString());
+
         }
 
         private static Instances DefineBucketAttributes(int numBuckets)
@@ -172,7 +219,7 @@ namespace Bagging
                 diabetesPedigreeFunction.addElement(attributeValueName);
                 age.addElement(attributeValueName);
             }
-            
+
             attributes.addElement(new weka.core.Attribute("numberOfTimesPregnant", numberOfTimesPregnant));
             attributes.addElement(new weka.core.Attribute("plasmaGlucoseConcentration", plasmaGlucoseConcentration));
             attributes.addElement(new weka.core.Attribute("diastolicBloodPressure", diastolicBloodPressure));
