@@ -21,7 +21,7 @@ namespace SVM_BV
             string trainingFile = @"C:\coding\ml\data\diabetes\diabetes_libsvmformat_train.txt";
             string testingFile = @"C:\coding\ml\data\diabetes\diabetes_libsvmformat_test.txt";
             int bootstrapSamples = 10;
-            int kernel = 0;
+            int kernel = 3;
             int? randomSeed = null;
 
             // Read in the training data
