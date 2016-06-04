@@ -16,8 +16,13 @@ namespace SVM_BV
     {
         public static void Main(string[] args)
         {
+            Trace.Listeners.Add(new ConsoleTraceListener());
+
             string trainingFile = @"C:\coding\ml\data\diabetes\diabetes_libsvmformat_train.txt";
             string testingFile = @"C:\coding\ml\data\diabetes\diabetes_libsvmformat_test.txt";
+            int bootstrapSamples = 10;
+            int kernel = 0;
+            int? randomSeed = null;
 
             // Read in the training data
             List<string> trainingData = new List<string>();
@@ -33,11 +38,52 @@ namespace SVM_BV
                 }
             }
 
+            // Read in the testing data
+            List<int> testingTargetValues = new List<int>();
+            using (StreamReader sr = File.OpenText(testingFile))
+            {
+                string s = String.Empty;
+                while ((s = sr.ReadLine()) != null)
+                {
+                    if (!String.IsNullOrWhiteSpace(s))
+                    {
+                        int value = Int32.Parse(s.Split(' ')[0]);
+                        // Map -1 to 0
+                        testingTargetValues.Add(value == -1 ? 0 : value);
+                    }
+                }
+            }
 
-            Program.RunSvm(trainingData, testingFile, 0, 0);
+            // Stores the predictions for every sampled training set
+            List<List<int>> allPredictions = new List<List<int>>();
+
+            for (int i = 0; i < bootstrapSamples; i++)
+            {
+                List<int> predictions = Program.RunSvm(trainingData, testingFile, kernel, randomSeed);
+
+                for (int k = 0; k < testingTargetValues.Count; k++)
+                {
+                    if (i == 0)
+                    {
+                        allPredictions.Add(new List<int>());
+                    }
+
+                    // Map -1 to 0
+                    allPredictions[k].Add(predictions[k] == -1 ? 0 : predictions[k]);
+                }
+            }
 
 
+            // Calculate bias and variance
+            BiasVariance.biasvar(testingTargetValues, allPredictions, testingTargetValues.Count, bootstrapSamples);
 
+            Trace.TraceInformation("");
+
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                Console.WriteLine("Done. Press enter to continue.");
+                Console.Read();
+            }
         }
 
         private static List<int> RunSvm(List<string> trainingData, string testingFile, int kernel, int? randomSeed)
@@ -67,15 +113,33 @@ namespace SVM_BV
 
             File.WriteAllText(sampledTrainingFile, sampledTrainingData.ToString());
 
-            string svmTrainExe = @"C:\tools\libsvm-3.21\svm-train.exe";
-            string trainArgs = String.Format("-t {0} {1} {2}", kernel, sampledTrainingFile, sampledModelFile);
-            Process.Start(svmTrainExe, trainArgs);
+            //string svmTrainExe = @"C:\tools\libsvm-3.21\svm-train.exe";
+            //string trainArgs = String.Format("-t {0} {1} {2}", kernel, sampledTrainingFile, sampledModelFile);
+            //Process.Start(svmTrainExe, trainArgs);
+
+            Process trainProcess = new Process();
+            trainProcess.StartInfo.FileName = @"C:\tools\libsvm-3.21\svm-train.exe";
+            trainProcess.StartInfo.Arguments = String.Format("-t {0} {1} {2}", kernel, sampledTrainingFile, sampledModelFile);
+            trainProcess.StartInfo.UseShellExecute = false;
+            //trainProcess.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            //trainProcess.StartInfo.CreateNoWindow = true;
+            trainProcess.Start();
+            trainProcess.WaitForExit();
 
             Thread.Sleep(1000);
 
-            string svmTestExe = @"C:\tools\libsvm-3.21\svm-predict.exe";
-            string testArgs = String.Format("{0} {1} {2}", testingFile, sampledModelFile, sampledResultsFile);
-            Process.Start(svmTestExe, testArgs);
+            //string svmTestExe = @"C:\tools\libsvm-3.21\svm-predict.exe";
+            //string testArgs = String.Format("{0} {1} {2}", testingFile, sampledModelFile, sampledResultsFile);
+            //Process.Start(svmTestExe, testArgs);
+
+            Process testProcess = new Process();
+            testProcess.StartInfo.FileName = @"C:\tools\libsvm-3.21\svm-predict.exe";
+            testProcess.StartInfo.Arguments = String.Format("{0} {1} {2}", testingFile, sampledModelFile, sampledResultsFile);
+            testProcess.StartInfo.UseShellExecute = false;
+            //testProcess.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            //testProcess.StartInfo.CreateNoWindow = true;
+            testProcess.Start();
+            testProcess.WaitForExit();
 
             Thread.Sleep(1000);
 
