@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bagging", "Bagging\Bagging.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BV", "BV\BV.csproj", "{A5582D40-AB2A-4057-BF4C-CF72A9569F5C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SVM_BV", "SVM_BV\SVM_BV.csproj", "{86A5E0D5-0836-4F9A-A337-12429455B99E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{A5582D40-AB2A-4057-BF4C-CF72A9569F5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5582D40-AB2A-4057-BF4C-CF72A9569F5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5582D40-AB2A-4057-BF4C-CF72A9569F5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86A5E0D5-0836-4F9A-A337-12429455B99E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86A5E0D5-0836-4F9A-A337-12429455B99E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86A5E0D5-0836-4F9A-A337-12429455B99E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86A5E0D5-0836-4F9A-A337-12429455B99E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>cdb4e662-9088-4ab1-b979-57c9e81afc28</ProjectGuid>
+    <ProjectGuid>{86A5E0D5-0836-4F9A-A337-12429455B99E}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SVM_BV</RootNamespace>
@@ -46,6 +46,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Bagging\Bagging.csproj">
+      <Project>{8f2154d1-74f0-4f28-a38f-422d7c8f92b1}</Project>
+      <Name>Bagging</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BV\BV.csproj">
+      <Project>{a5582d40-ab2a-4057-bf4c-cf72a9569f5c}</Project>
+      <Name>BV</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
